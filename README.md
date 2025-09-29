@@ -566,13 +566,11 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [ ] Enterprise features
 
 ---
-
-<div align="center">
-
-**Built with ❤️ by the FixRx Team**
-
-[⭐ Star us on GitHub](https://github.com/yourusername/fixrx) • [🐛 Report Bug](https://github.com/yourusername/fixrx/issues) • [💡 Request Feature](https://github.com/yourusername/fixrx/issues)
-
-</div>
-#   F i x R x  
- 
+  
+  <div align="center">
+  
+  **Built with ❤️ by the FixRx Team**
+  
+  [⭐ Star us on GitHub](https://github.com/yourusername/fixrx) • [🐛 Report Bug](https://github.com/yourusername/fixrx/issues) • [💡 Request Feature](https://github.com/yourusername/fixrx/issues)
+  
+  </div>
