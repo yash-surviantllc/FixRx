@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FixRx Auth Flow Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        button { padding: 10px 20px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        pre { background: #f8f9fa; padding: 10px; border-radius: 3px; overflow-x: auto; }
+        .log { margin: 10px 0; padding: 10px; background: #f8f9fa; border-left: 4px solid #007bff; }
+    </style>
+</head>
+<body>
+    <h1>🧪 FixRx Authentication Flow Test</h1>
+    
+    <div class="test-section info">
+        <h3>📋 Test Instructions</h3>
+        <p>This page will test the complete authentication flow to identify the redirect issue:</p>
+        <ol>
+            <li>Click "Test Registration" to create a new user</li>
+            <li>Click "Test Login" to authenticate</li>
+            <li>Check console logs for detailed flow information</li>
+        </ol>
+    </div>
+
+    <div class="test-section">
+        <h3>🔐 Authentication Tests</h3>
+        <button onclick="testRegistration()">Test Registration</button>
+        <button onclick="testLogin()">Test Login</button>
+        <button onclick="testProfileCheck()">Test Profile Check</button>
+        <button onclick="clearLogs()">Clear Logs</button>
+    </div>
+
+    <div class="test-section">
+        <h3>📊 Test Results</h3>
+        <div id="results"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>📝 Console Logs</h3>
+        <div id="logs"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3000/api/v1';
+        let testResults = [];
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${message}`;
+            console.log(logEntry);
+            
+            const logsDiv = document.getElementById('logs');
+            const logElement = document.createElement('div');
+            logElement.className = 'log';
+            logElement.innerHTML = `<strong>${timestamp}</strong>: ${message}`;
+            logsDiv.appendChild(logElement);
+            logsDiv.scrollTop = logsDiv.scrollHeight;
+        }
+
+        function updateResults() {
+            const resultsDiv = document.getElementById('results');
+            const passed = testResults.filter(r => r.status === 'PASSED').length;
+            const failed = testResults.filter(r => r.status === 'FAILED').length;
+            
+            resultsDiv.innerHTML = `
+                <div class="${failed === 0 ? 'success' : 'error'}">
+                    <strong>Results:</strong> ${passed} passed, ${failed} failed
+                </div>
+                ${testResults.map(r => `
+                    <div class="${r.status === 'PASSED' ? 'success' : 'error'}">
+                        <strong>${r.name}:</strong> ${r.status}
+                        ${r.error ? `<br><small>Error: ${r.error}</small>` : ''}
+                    </div>
+                `).join('')}
+            `;
+        }
+
+        async function testRegistration() {
+            log('🧪 Starting registration test...');
+            
+            try {
+                const userData = {
+                    email: `test-${Date.now()}@example.com`,
+                    password: 'testpass123',
+                    firstName: 'Test',
+                    lastName: 'User',
+                    role: 'CONSUMER'
+                };
+
+                log(`📤 Sending registration request: ${JSON.stringify(userData, null, 2)}`);
+                
+                const response = await fetch(`${API_BASE}/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(userData)
+                });
+
+                const data = await response.json();
+                log(`📥 Registration response (${response.status}): ${JSON.stringify(data, null, 2)}`);
+
+                if (response.ok && data.success) {
+                    testResults.push({ name: 'Registration', status: 'PASSED' });
+                    log('✅ Registration test PASSED');
+                    
+                    // Store user data for login test
+                    window.testUser = userData;
+                    
+                    // Check token format
+                    if (data.data?.tokens?.accessToken) {
+                        log(`🔑 Access token received: ${data.data.tokens.accessToken.substring(0, 20)}...`);
+                        log('✅ Token format is correct (data.tokens.accessToken)');
+                    } else {
+                        log('⚠️ Unexpected token format in response');
+                    }
+                } else {
+                    throw new Error(data.message || 'Registration failed');
+                }
+            } catch (error) {
+                testResults.push({ name: 'Registration', status: 'FAILED', error: error.message });
+                log(`❌ Registration test FAILED: ${error.message}`);
+            }
+            
+            updateResults();
+        }
+
+        async function testLogin() {
+            log('🧪 Starting login test...');
+            
+            if (!window.testUser) {
+                log('⚠️ No test user found. Please run registration test first.');
+                return;
+            }
+
+            try {
+                const loginData = {
+                    email: window.testUser.email,
+                    password: window.testUser.password
+                };
+
+                log(`📤 Sending login request: ${JSON.stringify(loginData, null, 2)}`);
+                
+                const response = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(loginData)
+                });
+
+                const data = await response.json();
+                log(`📥 Login response (${response.status}): ${JSON.stringify(data, null, 2)}`);
+
+                if (response.ok && data.success) {
+                    testResults.push({ name: 'Login', status: 'PASSED' });
+                    log('✅ Login test PASSED');
+                    
+                    // Store tokens for profile test
+                    if (data.data?.tokens?.accessToken) {
+                        window.accessToken = data.data.tokens.accessToken;
+                        log(`🔑 Access token stored: ${window.accessToken.substring(0, 20)}...`);
+                    }
+                } else {
+                    throw new Error(data.message || 'Login failed');
+                }
+            } catch (error) {
+                testResults.push({ name: 'Login', status: 'FAILED', error: error.message });
+                log(`❌ Login test FAILED: ${error.message}`);
+            }
+            
+            updateResults();
+        }
+
+        async function testProfileCheck() {
+            log('🧪 Starting profile check test...');
+            
+            if (!window.accessToken) {
+                log('⚠️ No access token found. Please run login test first.');
+                return;
+            }
+
+            try {
+                log('📤 Sending profile check request...');
+                
+                const response = await fetch(`${API_BASE}/consumers/profile`, {
+                    method: 'GET',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${window.accessToken}`
+                    }
+                });
+
+                const data = await response.json();
+                log(`📥 Profile check response (${response.status}): ${JSON.stringify(data, null, 2)}`);
+
+                if (response.status === 404) {
+                    testResults.push({ name: 'Profile Check', status: 'PASSED' });
+                    log('✅ Profile check test PASSED (404 - profile not found as expected)');
+                } else if (response.ok) {
+                    testResults.push({ name: 'Profile Check', status: 'PASSED' });
+                    log('✅ Profile check test PASSED (profile found)');
+                } else {
+                    throw new Error(data.message || 'Profile check failed');
+                }
+            } catch (error) {
+                testResults.push({ name: 'Profile Check', status: 'FAILED', error: error.message });
+                log(`❌ Profile check test FAILED: ${error.message}`);
+            }
+            
+            updateResults();
+        }
+
+        function clearLogs() {
+            document.getElementById('logs').innerHTML = '';
+            testResults = [];
+            updateResults();
+            log('🧹 Logs cleared');
+        }
+
+        // Initialize
+        log('🚀 FixRx Auth Flow Test initialized');
+        log('📋 Backend server should be running on http://localhost:3000');
+        log('📋 Frontend server should be running on http://localhost:3001');
+        updateResults();
+    </script>
+</body>
+</html>
