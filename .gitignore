@@ -55,4 +55,3 @@ backend/prisma/dev.db*
 # Misc
 *.local
 *.env.local
-backend/
