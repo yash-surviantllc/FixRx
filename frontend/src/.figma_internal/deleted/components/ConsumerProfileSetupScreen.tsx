@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { ArrowLeft, Check, ChevronDown, Search } from 'lucide-react';
 import { motion } from 'motion/react';
-
+import React from 'react';
 interface ConsumerProfileSetupScreenProps {
   onBack: () => void;
   onContinue: (profileData: ConsumerProfileData) => void;

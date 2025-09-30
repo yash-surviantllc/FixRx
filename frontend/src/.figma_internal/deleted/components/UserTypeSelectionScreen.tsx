@@ -1,3 +1,4 @@
+import React from 'react';
 import { useState } from 'react';
 import { Home, Hammer } from 'lucide-react';
 import { motion } from 'motion/react';

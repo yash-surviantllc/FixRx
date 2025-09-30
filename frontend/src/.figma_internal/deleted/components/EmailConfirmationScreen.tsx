@@ -1,3 +1,4 @@
+import React from 'react';
 import { useState } from 'react';
 import { Check, Loader2, ArrowLeft } from 'lucide-react';
 import { motion } from 'motion/react';
@@ -71,7 +72,7 @@ export function EmailConfirmationScreen({ email, onBack, onUseDifferentEmail, on
             animate={{ scale: 1, opacity: 1 }}
             transition={{ 
               duration: 0.6, 
-              ease: "elastic.out",
+              ease: "easeOut",
               delay: 0.1 
             }}
             className="mb-8 flex justify-center"

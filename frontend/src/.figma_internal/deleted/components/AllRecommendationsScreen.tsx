@@ -1,3 +1,4 @@
+import React from 'react';
 import { useState } from 'react';
 import { Search, Mic, ArrowLeft, Star, Check, Filter, SlidersHorizontal } from 'lucide-react';
 import { motion } from 'motion/react';
