@@ -3,10 +3,12 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Home, Search, MessageSquare, User } from 'lucide-react-native';
 import { MainTabParamList } from '../types/navigation';
 import { useAppContext } from '../context/AppContext';
+import { useTheme } from '../context/ThemeContext';
 
 // Screens
 import ConsumerDashboard from '../screens/consumer/ConsumerDashboard';
 import VendorDashboard from '../screens/vendor/VendorDashboard';
+import ContractorsScreen from '../screens/consumer/ContractorsScreen';
 import AllRecommendationsScreen from '../screens/AllRecommendationsScreen';
 import ChatListScreen from '../screens/ChatListScreen';
 import ProfileScreen from '../screens/ProfileScreen';
@@ -15,6 +17,7 @@ const Tab = createBottomTabNavigator<MainTabParamList>();
 
 function MainTabs() {
   const { userType } = useAppContext();
+  const { colors, isDarkMode } = useTheme();
 
   return (
     <Tab.Navigator
@@ -30,8 +33,13 @@ function MainTabs() {
             return <User size={size} color={color} />;
           }
         },
-        tabBarActiveTintColor: '#007AFF',
-        tabBarInactiveTintColor: 'gray',
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.secondaryText,
+        tabBarStyle: {
+          backgroundColor: colors.tabBarBackground,
+          borderTopColor: colors.tabBarBorder,
+          borderTopWidth: 1,
+        },
         headerShown: false,
       })}
     >
@@ -41,7 +49,7 @@ function MainTabs() {
       />
       <Tab.Screen 
         name="Contractors" 
-        component={AllRecommendationsScreen} 
+        component={userType === 'vendor' ? AllRecommendationsScreen : ContractorsScreen} 
       />
       <Tab.Screen 
         name="Messages" 

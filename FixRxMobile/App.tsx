@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { AppProvider } from './src/context/AppContext';
+import { ThemeProvider } from './src/context/ThemeContext';
 
 // Auth Screens
 import WelcomeScreen from './src/screens/WelcomeScreen';
@@ -21,6 +22,11 @@ import VendorPortfolioUploadScreen from './src/screens/vendor/VendorPortfolioUpl
 
 // Main App Navigation
 import MainTabs from './src/navigation/MainTabs';
+import ContactSelectionScreen from './src/screens/ContactSelectionScreen';
+import MessagePreviewScreen from './src/screens/MessagePreviewScreen';
+import InvitationSuccessScreen from './src/screens/InvitationSuccessScreen';
+import ContractorProfileScreen from './src/screens/ContractorProfileScreen';
+import NotificationsScreen from './src/screens/NotificationsScreen';
 
 // Create a stack navigator
 const Stack = createNativeStackNavigator();
@@ -29,10 +35,11 @@ const Stack = createNativeStackNavigator();
 export default function App() {
   return (
     <SafeAreaProvider>
-      <AppProvider>
-        <NavigationContainer>
-          <StatusBar style="auto" />
-          <Stack.Navigator 
+      <ThemeProvider>
+        <AppProvider>
+          <NavigationContainer>
+            <StatusBar style="auto" />
+            <Stack.Navigator 
             initialRouteName="Welcome"
             screenOptions={{
               headerShown: false,
@@ -117,9 +124,52 @@ export default function App() {
                 animation: 'fade',
               }}
             />
-          </Stack.Navigator>
-        </NavigationContainer>
-      </AppProvider>
+            
+            {/* Additional Screens */}
+            <Stack.Screen 
+              name="ContactSelection" 
+              component={ContactSelectionScreen} 
+              options={{
+                gestureEnabled: true,
+                animation: 'slide_from_right',
+              }}
+            />
+            <Stack.Screen 
+              name="MessagePreview" 
+              component={MessagePreviewScreen} 
+              options={{
+                gestureEnabled: true,
+                animation: 'slide_from_right',
+              }}
+            />
+            <Stack.Screen 
+              name="InvitationSuccess" 
+              component={InvitationSuccessScreen} 
+              options={{
+                gestureEnabled: false,
+                animation: 'fade',
+              }}
+            />
+            <Stack.Screen 
+              name="ContractorProfile" 
+              component={ContractorProfileScreen} 
+              options={{
+                gestureEnabled: true,
+                animation: 'slide_from_right',
+              }}
+            />
+            <Stack.Screen 
+              name="Notifications" 
+              component={NotificationsScreen} 
+              options={{
+                gestureEnabled: true,
+                animation: 'slide_from_right',
+              }}
+            />
+            </Stack.Navigator>
+          </NavigationContainer>
+        </AppProvider>
+      </ThemeProvider>
     </SafeAreaProvider>
   );
 }

@@ -34,6 +34,11 @@ const WelcomeScreen: React.FC = () => {
     console.log('Continue with Facebook');
   };
 
+  const handlePhoneContinue = () => {
+    // TODO: Implement phone number authentication
+    console.log('Continue with Phone');
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
@@ -96,6 +101,18 @@ const WelcomeScreen: React.FC = () => {
             {' '}and{' '}
             <Text style={styles.linkText}>Privacy Policy</Text>
           </Text>
+        </View>
+        
+        {/* Phone Number Button */}
+        <View style={styles.phoneButtonContainer}>
+          <TouchableOpacity 
+            style={styles.phoneButton}
+            onPress={handlePhoneContinue}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="call-outline" size={18} color="#2563EB" style={styles.phoneButtonIcon} />
+            <Text style={styles.phoneButtonText}>Login with phone number</Text>
+          </TouchableOpacity>
         </View>
       </View>
     </SafeAreaView>
@@ -214,7 +231,7 @@ const styles = StyleSheet.create({
   },
   termsContainer: {
     position: 'absolute',
-    bottom: 40,
+    bottom: 90,
     left: 24,
     right: 24,
   },
@@ -227,6 +244,26 @@ const styles = StyleSheet.create({
   linkText: {
     color: '#2563EB',
     textDecorationLine: 'underline',
+  },
+  phoneButtonContainer: {
+    position: 'absolute',
+    bottom: 30,
+    left: 24,
+    right: 24,
+  },
+  phoneButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+  },
+  phoneButtonIcon: {
+    marginRight: 6,
+  },
+  phoneButtonText: {
+    color: '#2563EB',
+    fontSize: 15,
+    fontWeight: '500',
   },
 });
 

@@ -8,12 +8,15 @@ import {
   Image, 
   Switch,
   Alert,
-  Platform
+  Platform,
+  SafeAreaView,
+  StatusBar
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { MaterialIcons, MaterialCommunityIcons, Feather, Ionicons } from '@expo/vector-icons';
 import { useAppContext } from '../context/AppContext';
+import { useTheme } from '../context/ThemeContext';
 import { RootStackParamList } from '../types/navigation';
 
 type ProfileScreenNavigationProp = StackNavigationProp<RootStackParamList>;
@@ -21,8 +24,8 @@ type ProfileScreenNavigationProp = StackNavigationProp<RootStackParamList>;
 const ProfileScreen: React.FC = () => {
   const navigation = useNavigation<ProfileScreenNavigationProp>();
   const { userProfile, setUserProfile, logout } = useAppContext();
+  const { colors, isDarkMode, toggleTheme } = useTheme();
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-  const [darkMode, setDarkMode] = useState(false);
 
   // Mock data for user stats
   const userStats = [
@@ -35,13 +38,13 @@ const ProfileScreen: React.FC = () => {
     {
       id: 'account',
       title: 'Account',
-      icon: <MaterialIcons name="person-outline" size={24} color="#6B7280" />,
+      icon: <MaterialIcons name="person-outline" size={24} color={colors.secondaryText} />,
       onPress: () => navigation.navigate('EditProfile' as never),
     },
     {
       id: 'notifications',
       title: 'Notifications',
-      icon: <Ionicons name="notifications-outline" size={24} color="#6B7280" />,
+      icon: <Ionicons name="notifications-outline" size={24} color={colors.secondaryText} />,
       onPress: () => navigation.navigate('NotificationSettings' as never),
       rightComponent: (
         <Switch
@@ -55,25 +58,25 @@ const ProfileScreen: React.FC = () => {
     {
       id: 'appearance',
       title: 'Appearance',
-      icon: <Ionicons name="moon-outline" size={24} color="#6B7280" />,
+      icon: <Ionicons name="moon-outline" size={24} color={colors.secondaryText} />,
       rightComponent: (
         <View style={styles.themeSwitchContainer}>
           <Ionicons 
             name="sunny-outline" 
             size={20} 
-            color={!darkMode ? '#3B82F6' : '#9CA3AF'} 
+            color={!isDarkMode ? '#3B82F6' : colors.secondaryText} 
           />
           <Switch
-            value={darkMode}
-            onValueChange={setDarkMode}
+            value={isDarkMode}
+            onValueChange={toggleTheme}
             trackColor={{ false: '#E5E7EB', true: '#D1E0FF' }}
-            thumbColor={darkMode ? '#3B82F6' : '#9CA3AF'}
+            thumbColor={isDarkMode ? '#3B82F6' : '#9CA3AF'}
             style={styles.themeSwitch}
           />
           <Ionicons 
             name="moon" 
             size={18} 
-            color={darkMode ? '#3B82F6' : '#9CA3AF'} 
+            color={isDarkMode ? '#3B82F6' : colors.secondaryText} 
           />
         </View>
       ),
@@ -125,27 +128,28 @@ const ProfileScreen: React.FC = () => {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} />
       <ScrollView>
         {/* Header */}
-        <View style={styles.header}>
+        <View style={[styles.header, { backgroundColor: colors.headerBackground, borderBottomColor: colors.border }]}>
           <TouchableOpacity 
             style={styles.backButton}
             onPress={() => navigation.goBack()}
           >
-            <Ionicons name="arrow-back" size={24} color="#1F2937" />
+            <Ionicons name="arrow-back" size={24} color={colors.primaryText} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Profile</Text>
+          <Text style={[styles.headerTitle, { color: colors.primaryText }]}>Profile</Text>
           <TouchableOpacity 
             style={styles.editButton}
             onPress={() => navigation.navigate('EditProfile')}
           >
-            <Feather name="edit-3" size={20} color="#3B82F6" />
+            <Feather name="edit-3" size={20} color={colors.primary} />
           </TouchableOpacity>
         </View>
 
         {/* Profile Info */}
-        <View style={styles.profileSection}>
+        <View style={[styles.profileSection, { backgroundColor: colors.cardBackground }]}>
           <View style={styles.avatarContainer}>
             <Image 
               source={{ uri: userProfile?.profileImage || 'https://via.placeholder.com/100' }} 
@@ -157,51 +161,51 @@ const ProfileScreen: React.FC = () => {
             </TouchableOpacity>
           </View>
           
-          <Text style={styles.userName}>
+          <Text style={[styles.userName, { color: colors.primaryText }]}>
             {userProfile?.firstName} {userProfile?.lastName}
           </Text>
           
           {userProfile?.businessName && (
-            <Text style={styles.businessName}>
+            <Text style={[styles.businessName, { color: colors.secondaryText }]}>
               {userProfile.businessName}
             </Text>
           )}
           
-          <Text style={styles.userEmail}>
+          <Text style={[styles.userEmail, { color: colors.secondaryText }]}>
             {userProfile?.email}
           </Text>
           
           <View style={styles.statsContainer}>
             {userStats.map((stat, index) => (
-              <View key={index} style={styles.statItem}>
-                <Text style={styles.statValue}>
+              <View key={index} style={[styles.statItem, { borderRightColor: colors.border }]}>
+                <Text style={[styles.statValue, { color: colors.primaryText }]}>
                   {stat.value}
                   {stat.rating && <Text style={styles.ratingText}>★</Text>}
                 </Text>
-                <Text style={styles.statLabel}>{stat.label}</Text>
+                <Text style={[styles.statLabel, { color: colors.secondaryText }]}>{stat.label}</Text>
               </View>
             ))}
           </View>
         </View>
 
         {/* Menu Items */}
-        <View style={styles.menuContainer}>
+        <View style={[styles.menuContainer, { backgroundColor: colors.cardBackground }]}>
           {menuItems.map((item) => (
             <TouchableOpacity 
               key={item.id}
-              style={styles.menuItem}
+              style={[styles.menuItem, { borderBottomColor: colors.border }]}
               onPress={item.onPress}
               disabled={!item.onPress}
             >
               <View style={styles.menuIcon}>{item.icon}</View>
-              <Text style={styles.menuText}>{item.title}</Text>
+              <Text style={[styles.menuText, { color: colors.primaryText }]}>{item.title}</Text>
               {item.rightComponent ? (
                 item.rightComponent
               ) : (
                 <MaterialIcons 
                   name="keyboard-arrow-right" 
                   size={24} 
-                  color="#9CA3AF" 
+                  color={colors.secondaryText} 
                 />
               )}
             </TouchableOpacity>
@@ -210,7 +214,7 @@ const ProfileScreen: React.FC = () => {
 
         {/* Logout Button */}
         <TouchableOpacity 
-          style={styles.logoutButton}
+          style={[styles.logoutButton, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}
           onPress={handleLogout}
         >
           <MaterialIcons name="logout" size={20} color="#EF4444" />
@@ -218,15 +222,15 @@ const ProfileScreen: React.FC = () => {
         </TouchableOpacity>
 
         <View style={styles.versionContainer}>
-          <Text style={styles.versionText}>
+          <Text style={[styles.versionText, { color: colors.secondaryText }]}>
             FixRx App v1.0.0
           </Text>
-          <Text style={styles.copyrightText}>
+          <Text style={[styles.copyrightText, { color: colors.secondaryText }]}>
             © 2023 FixRx. All rights reserved.
           </Text>
         </View>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 };
 

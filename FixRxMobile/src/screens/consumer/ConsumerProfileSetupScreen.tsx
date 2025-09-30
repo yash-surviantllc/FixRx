@@ -15,6 +15,7 @@ import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../../types/navigation';
 import { useAppContext } from '../../context/AppContext';
+import MetroAreaDropdown from '../../components/MetroAreaDropdown';
 
 type ConsumerProfileScreenNavigationProp = StackNavigationProp<RootStackParamList, 'ConsumerProfile'>;
 
@@ -145,16 +146,12 @@ const ConsumerProfileSetupScreen: React.FC = () => {
               />
             </View>
             
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Metro Area</Text>
-              <TextInput
-                style={styles.input}
-                value={formData.metroArea}
-                onChangeText={(text) => handleInputChange('metroArea', text)}
-                placeholder="e.g., New York, NY"
-                placeholderTextColor="#9CA3AF"
-              />
-            </View>
+            <MetroAreaDropdown
+              value={formData.metroArea}
+              onSelect={(value) => handleInputChange('metroArea', value)}
+              label="Metro Area"
+              placeholder="Select your metropolitan area"
+            />
             
             <TouchableOpacity 
               style={[styles.button, (!formData.firstName || !formData.lastName) && styles.buttonDisabled]}

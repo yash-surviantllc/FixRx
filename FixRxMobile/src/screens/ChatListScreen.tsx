@@ -7,11 +7,15 @@ import {
   TouchableOpacity, 
   TextInput, 
   Image,
-  ActivityIndicator
+  ActivityIndicator,
+  SafeAreaView,
+  StatusBar
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../types/navigation';
+import { useTheme } from '../context/ThemeContext';
+import { Ionicons } from '@expo/vector-icons';
 
 type ChatListScreenNavigationProp = StackNavigationProp<RootStackParamList, 'ChatList'>;
 
@@ -76,6 +80,7 @@ const MOCK_CONVERSATIONS = [
 
 const ChatListScreen: React.FC = () => {
   const navigation = useNavigation<ChatListScreenNavigationProp>();
+  const { colors, isDarkMode } = useTheme();
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [conversations, setConversations] = useState<typeof MOCK_CONVERSATIONS>([]);
@@ -98,7 +103,7 @@ const ChatListScreen: React.FC = () => {
   // Render each conversation item
   const renderConversation = ({ item }: { item: typeof MOCK_CONVERSATIONS[0] }) => (
     <TouchableOpacity 
-      style={styles.conversationItem}
+      style={[styles.conversationItem, { borderBottomColor: colors.border }]}
       onPress={() => {
         navigation.navigate('Messaging', { 
           conversationId: item.id
@@ -119,6 +124,7 @@ const ChatListScreen: React.FC = () => {
           <Text 
             style={[
               styles.userName,
+              { color: colors.primaryText },
               item.unreadCount > 0 && styles.unreadUserName
             ]}
             numberOfLines={1}
@@ -128,6 +134,7 @@ const ChatListScreen: React.FC = () => {
           <Text 
             style={[
               styles.time,
+              { color: colors.secondaryText },
               item.unreadCount > 0 && styles.unreadTime
             ]}
           >
@@ -139,6 +146,7 @@ const ChatListScreen: React.FC = () => {
           <Text 
             style={[
               styles.lastMessage,
+              { color: colors.secondaryText },
               item.unreadCount > 0 && styles.unreadMessage
             ]}
             numberOfLines={1}
@@ -156,7 +164,7 @@ const ChatListScreen: React.FC = () => {
         </View>
         
         {!item.isOnline && item.lastActive && (
-          <Text style={styles.lastSeenText}>
+          <Text style={[styles.lastSeenText, { color: colors.secondaryText }]}>
             Last active {item.lastActive}
           </Text>
         )}
@@ -165,13 +173,21 @@ const ChatListScreen: React.FC = () => {
   );
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} />
+      
+      {/* Header */}
+      <View style={[styles.header, { backgroundColor: colors.headerBackground }]}>
+        <Text style={[styles.headerTitle, { color: colors.primaryText }]}>Messages</Text>
+      </View>
+      
       {/* Search Bar */}
-      <View style={styles.searchContainer}>
+      <View style={[styles.searchContainer, { backgroundColor: colors.inputBackground }]}>
+        <Ionicons name="search" size={20} color={colors.secondaryText} style={styles.searchIcon} />
         <TextInput
-          style={styles.searchInput}
+          style={[styles.searchInput, { color: colors.primaryText }]}
           placeholder="Search conversations..."
-          placeholderTextColor="#9CA3AF"
+          placeholderTextColor={colors.secondaryText}
           value={searchQuery}
           onChangeText={setSearchQuery}
         />
@@ -179,20 +195,21 @@ const ChatListScreen: React.FC = () => {
       
       {/* New Message Button */}
       <TouchableOpacity 
-        style={styles.newMessageButton}
+        style={[styles.newMessageButton, { backgroundColor: colors.primary }]}
         onPress={() => {
           // Navigate to new message screen
           // navigation.navigate('NewMessage');
         }}
       >
-        <Text style={styles.newMessageButtonText}>+ New Message</Text>
+        <Ionicons name="create-outline" size={20} color="#FFFFFF" />
+        <Text style={styles.newMessageButtonText}>New Message</Text>
       </TouchableOpacity>
       
       {/* Conversations List */}
       {isLoading ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#0D6EFD" />
-          <Text style={styles.loadingText}>Loading conversations...</Text>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={[styles.loadingText, { color: colors.secondaryText }]}>Loading conversations...</Text>
         </View>
       ) : filteredConversations.length > 0 ? (
         <FlatList
@@ -204,8 +221,9 @@ const ChatListScreen: React.FC = () => {
         />
       ) : (
         <View style={styles.emptyState}>
-          <Text style={styles.emptyStateTitle}>No conversations found</Text>
-          <Text style={styles.emptyStateText}>
+          <Ionicons name="chatbubbles-outline" size={48} color={colors.secondaryText} />
+          <Text style={[styles.emptyStateTitle, { color: colors.primaryText }]}>No conversations found</Text>
+          <Text style={[styles.emptyStateText, { color: colors.secondaryText }]}>
             {searchQuery 
               ? 'No conversations match your search.' 
               : 'Start a new conversation to get started!'
@@ -222,7 +240,7 @@ const ChatListScreen: React.FC = () => {
           </TouchableOpacity>
         </View>
       )}
-    </View>
+    </SafeAreaView>
   );
 };
 
@@ -231,73 +249,88 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFFFFF',
   },
+  header: {
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: '600',
+    color: '#1F2937',
+  },
   searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
     padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#E9ECEF',
   },
+  searchIcon: {
+    marginRight: 8,
+  },
   searchInput: {
-    height: 48,
-    backgroundColor: '#F1F3F5',
-    borderRadius: 8,
-    paddingHorizontal: 16,
+    flex: 1,
+    height: 40,
+    backgroundColor: 'transparent',
     fontSize: 16,
-    color: '#212529',
+    color: '#1F2937',
   },
   newMessageButton: {
     margin: 16,
-    padding: 16,
+    padding: 12,
     backgroundColor: '#0D6EFD',
     borderRadius: 8,
+    flexDirection: 'row',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    justifyContent: 'center',
   },
   newMessageButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
+    marginLeft: 8,
   },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
+  startChatButton: {
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    backgroundColor: '#0D6EFD',
+    borderRadius: 8,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  loadingText: {
-    marginTop: 16,
+  startChatButtonText: {
+    color: '#FFFFFF',
     fontSize: 16,
-    color: '#6C757D',
-  },
-  listContent: {
-    paddingBottom: 16,
+    fontWeight: '600',
+    marginLeft: 8,
   },
   conversationItem: {
     flexDirection: 'row',
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#F1F3F5',
+    borderBottomColor: '#E9ECEF',
   },
   avatarContainer: {
-    marginRight: 16,
     position: 'relative',
+    marginRight: 12,
   },
   avatar: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#F1F3F5',
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#F3F4F6',
   },
   onlineBadge: {
     position: 'absolute',
     bottom: 0,
-    right: 12,
+    right: 0,
     width: 14,
     height: 14,
     borderRadius: 7,
-    backgroundColor: '#28A745',
+    backgroundColor: '#10B981',
     borderWidth: 2,
     borderColor: '#FFFFFF',
   },
@@ -314,84 +347,84 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#212529',
+    color: '#1F2937',
     flex: 1,
-    marginRight: 8,
   },
   unreadUserName: {
-    fontWeight: '600',
+    fontWeight: '700',
   },
   time: {
     fontSize: 12,
-    color: '#ADB5BD',
+    color: '#6B7280',
   },
   unreadTime: {
     color: '#0D6EFD',
-    fontWeight: '500',
+    fontWeight: '600',
   },
   conversationFooter: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 2,
   },
   lastMessage: {
-    flex: 1,
     fontSize: 14,
-    color: '#6C757D',
-    marginRight: 8,
+    color: '#6B7280',
+    flex: 1,
   },
   unreadMessage: {
-    color: '#212529',
-    fontWeight: '500',
+    color: '#1F2937',
+    fontWeight: '600',
   },
   unreadBadge: {
     backgroundColor: '#0D6EFD',
     borderRadius: 10,
-    minWidth: 20,
-    height: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    marginLeft: 8,
   },
   unreadCount: {
     color: '#FFFFFF',
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   lastSeenText: {
-    fontSize: 11,
-    color: '#ADB5BD',
-    marginTop: 4,
+    fontSize: 12,
+    color: '#9CA3AF',
+    marginTop: 2,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: '#6B7280',
+  },
+  listContent: {
+    flexGrow: 1,
   },
   emptyState: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 40,
+    paddingVertical: 40,
   },
   emptyStateTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '600',
-    color: '#212529',
+    color: '#1F2937',
+    marginTop: 16,
     marginBottom: 8,
-    textAlign: 'center',
   },
   emptyStateText: {
-    fontSize: 16,
-    color: '#6C757D',
+    fontSize: 14,
+    color: '#6B7280',
     textAlign: 'center',
+    paddingHorizontal: 32,
     marginBottom: 24,
-  },
-  startChatButton: {
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    backgroundColor: '#0D6EFD',
-    borderRadius: 8,
-  },
-  startChatButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
   },
 });
 

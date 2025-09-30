@@ -19,6 +19,8 @@ interface AppContextType {
   selectedRequestId: string;
   setSelectedRequestId: (id: string) => void;
   logout: () => void;
+  isAuthenticated: boolean;
+  setIsAuthenticated: (value: boolean) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -32,6 +34,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const [hasContactedContractor, setHasContactedContractor] = useState(false);
   const [notificationPermissionGranted, setNotificationPermissionGranted] = useState(false);
   const [selectedRequestId, setSelectedRequestId] = useState('');
+  const [isAuthenticated, setIsAuthenticated] = useState(true); // Default to true for testing
 
   const logout = () => {
     setUserEmail('');
@@ -42,6 +45,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setHasContactedContractor(false);
     setNotificationPermissionGranted(false);
     setSelectedRequestId('');
+    setIsAuthenticated(false);
   };
 
   return (
@@ -64,6 +68,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         selectedRequestId,
         setSelectedRequestId,
         logout,
+        isAuthenticated,
+        setIsAuthenticated,
       }}
     >
       {children}

@@ -1,3 +1,5 @@
+import { NavigatorScreenParams } from '@react-navigation/native';
+
 export type RootStackParamList = {
   // Auth Flow
   Welcome: undefined;
@@ -10,38 +12,31 @@ export type RootStackParamList = {
   
   // Vendor Onboarding
   VendorProfileSetup: undefined;
-  VendorServiceSelection: undefined;
-  VendorPortfolioUpload: undefined;
-  
-  // Main Tabs
-  MainTabs: undefined;
-  
-  // Consumer Screens
-  ConsumerDashboard: undefined;
-  
-  // Vendor Screens
-  VendorDashboard: undefined;
-  
-  // Shared Screens
-  AllRecommendations: undefined;
-  ChatList: undefined;
-  Messages: { conversationId: string };
-  Profile: undefined;
+  ServiceSelection: undefined;
+  LocationSetup: undefined;
+  MainTabs: NavigatorScreenParams<MainTabParamList>;
   EditProfile: undefined;
-  PaymentMethods: undefined;
-  SecuritySettings: undefined;
-  HelpCenter: undefined;
-  AboutUs: undefined;
-  ServiceRequestDetail: { requestId: string };
-  ContractorInvitation: undefined;
-  ContactSelection: undefined;
-  InvitationPreview: undefined;
-  InvitationConfirmation: undefined;
-  NotificationPermission: undefined;
-  NotificationCenter: undefined;
   NotificationSettings: undefined;
+  PaymentMethods: undefined;
+  Security: undefined;
+  HelpSupport: undefined;
+  About: undefined;
   Messaging: { conversationId: string };
-  ServiceRating: { serviceId: string };
+  ChatList: undefined;
+  AllRecommendations: undefined;
+  ContactSelection: { inviteType: 'contractor' | 'friend' };
+  MessagePreview: { 
+    selectedContacts: any[];
+    inviteType: 'contractor' | 'friend';
+  };
+  InvitationSuccess: {
+    invitationCount: number;
+    inviteType: 'contractor' | 'friend';
+  };
+  ContractorProfile: {
+    contractor?: any;
+  };
+  Notifications: undefined;
   RatingConfirmation: { rating: number; comment: string };
   FriendsUsingVendor: { vendorId: string };
 };

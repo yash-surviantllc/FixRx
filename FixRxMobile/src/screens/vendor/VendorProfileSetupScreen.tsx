@@ -17,6 +17,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../../types/navigation';
 import { useAppContext } from '../../context/AppContext';
 import * as ImagePicker from 'expo-image-picker';
+import MetroAreaDropdown from '../../components/MetroAreaDropdown';
 
 type VendorProfileScreenNavigationProp = StackNavigationProp<RootStackParamList, 'VendorProfileSetup'>;
 
@@ -29,6 +30,7 @@ const VendorProfileSetupScreen: React.FC = () => {
     ownerName: userProfile?.firstName ? `${userProfile.firstName} ${userProfile.lastName || ''}`.trim() : '',
     phone: userProfile?.phone || '',
     businessAddress: '',
+    metroArea: userProfile?.metroArea || '',
     yearsInBusiness: '',
     about: '',
   });
@@ -195,6 +197,14 @@ const VendorProfileSetupScreen: React.FC = () => {
                 placeholderTextColor="9CA3AF"
               />
             </View>
+            
+            <MetroAreaDropdown
+              value={formData.metroArea}
+              onSelect={(value) => handleInputChange('metroArea', value)}
+              label="Service Area"
+              required
+              placeholder="Select your metropolitan area"
+            />
             
             <View style={styles.inputContainer}>
               <Text style={styles.label}>Years in Business</Text>

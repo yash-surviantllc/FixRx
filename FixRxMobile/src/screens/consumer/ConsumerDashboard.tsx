@@ -1,190 +1,360 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
+import React, { useState } from 'react';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  ScrollView, 
+  TouchableOpacity, 
+  Image, 
+  TextInput,
+  SafeAreaView,
+  StatusBar,
+  Switch
+} from 'react-native';
+import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { RootStackParamList } from '../../types/navigation';
 import { useAppContext } from '../../context/AppContext';
+import { useTheme } from '../../context/ThemeContext';
+import { Ionicons } from '@expo/vector-icons';
+import SearchBar from '../../components/SearchBar';
 
-type ConsumerDashboardNavigationProp = StackNavigationProp<RootStackParamList, 'ConsumerDashboard'>;
+type ConsumerDashboardNavigationProp = NavigationProp<RootStackParamList>;
 
 const ConsumerDashboard: React.FC = () => {
   const navigation = useNavigation<ConsumerDashboardNavigationProp>();
   const { userProfile } = useAppContext();
+  const { colors, isDarkMode, toggleTheme } = useTheme();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedFilter, setSelectedFilter] = useState('Available now');
+
+  const filters = ['Available now', 'Highly rated', 'Close by'];
+
+  // Mock data for recent service
+  const recentService = {
+    type: 'Plumbing service',
+    contractor: 'Mike Rodriguez',
+    status: 'complete',
+    rating: 0, // Not rated yet
+  };
 
   // Mock data for recommended contractors
-  const recommendedContractors = [
-    { id: '1', name: 'Elite Plumbing', rating: 4.8, category: 'Plumbing', image: 'https://example.com/plumber.jpg' },
-    { id: '2', name: 'Bright Electric', rating: 4.9, category: 'Electrical', image: 'https://example.com/electrician.jpg' },
-    { id: '3', name: 'Cool Breeze HVAC', rating: 4.7, category: 'HVAC', image: 'https://example.com/hvac.jpg' },
+  // Filter recommended contractors based on search
+  const allRecommendedContractors = [
+    {
+      id: '1',
+      name: 'Mike Rodriguez',
+      service: 'Plumbing',
+      rating: 4.9,
+      ratingCount: 3,
+      available: true,
+      image: 'https://i.pravatar.cc/100?img=8',
+    },
+    {
+      id: '2',
+      name: 'Jennifer Chen',
+      service: 'Electrical',
+      rating: 4.8,
+      ratingCount: 7,
+      available: true,
+      image: 'https://i.pravatar.cc/100?img=5',
+    },
+    {
+      id: '3',
+      name: 'David Kim',
+      service: 'Handyman',
+      rating: 4.7,
+      ratingCount: 2,
+      available: true,
+      image: 'https://i.pravatar.cc/100?img=12',
+    },
+    {
+      id: '4',
+      name: 'Carlos Martinez',
+      service: 'Construction',
+      rating: 4.9,
+      ratingCount: 5,
+      available: false,
+      image: 'https://i.pravatar.cc/100?img=15',
+    },
   ];
 
-  // Mock data for recent activity
-  const recentActivity = [
-    { id: '1', type: 'booking', title: 'Appointment Confirmed', description: 'Your appointment with Elite Plumbing is confirmed for tomorrow at 2 PM', time: '2 hours ago' },
-    { id: '2', type: 'message', title: 'New Message', description: 'You have a new message from Bright Electric', time: '5 hours ago' },
-    { id: '3', type: 'reminder', title: 'Upcoming Service', description: 'Your AC maintenance with Cool Breeze is scheduled in 3 days', time: '1 day ago' },
-  ];
+  const recommendedContractors = allRecommendedContractors.filter(contractor => {
+    if (!searchQuery) return true;
+    const query = searchQuery.toLowerCase();
+    return contractor.name.toLowerCase().includes(query) ||
+           contractor.service.toLowerCase().includes(query);
+  });
+
+  const getRatingBadgeColor = (ratingCount: number) => {
+    if (ratingCount >= 5) return '#10B981'; // Green for 5+
+    if (ratingCount >= 3) return '#F59E0B'; // Orange for 3-4
+    return '#3B82F6'; // Blue for 1-2
+  };
 
   return (
-    <ScrollView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.greeting}>Hello, {userProfile?.firstName || 'there'}</Text>
-          <Text style={styles.subtitle}>What would you like to do today?</Text>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} />
+      <ScrollView showsVerticalScrollIndicator={false}>
+        {/* Header */}
+        <View style={[styles.header, { backgroundColor: colors.headerBackground }]}>
+          <View style={styles.headerLeft}>
+            <Text style={[styles.greeting, { color: colors.primaryText }]}>Hello {userProfile?.firstName || 'John'}</Text>
+            <View style={styles.locationContainer}>
+              <Ionicons name="location-sharp" size={14} color={colors.secondaryText} />
+              <Text style={[styles.location, { color: colors.secondaryText }]}>San Francisco</Text>
+            </View>
+          </View>
+          <View style={styles.headerRight}>
+            <View style={styles.darkModeToggle}>
+              <Ionicons 
+                name={isDarkMode ? "moon" : "sunny"} 
+                size={20} 
+                color={isDarkMode ? "#FFC107" : "#F59E0B"} 
+              />
+              <Switch
+                value={isDarkMode}
+                onValueChange={toggleTheme}
+                trackColor={{ false: '#D1D5DB', true: '#4B5563' }}
+                thumbColor={isDarkMode ? '#FFC107' : '#F59E0B'}
+                style={styles.switch}
+              />
+            </View>
+            <Text style={[styles.weather, { color: colors.secondaryText }]}>Cloudy, 72°F</Text>
+            <View style={styles.headerIcons}>
+              <TouchableOpacity 
+            style={styles.notificationButton}
+            onPress={() => navigation.navigate('Notifications' as any)}
+          >
+                <Ionicons name="notifications-outline" size={24} color={colors.primaryText} />
+                <View style={styles.notificationBadge}>
+                  <Text style={styles.notificationBadgeText}>1</Text>
+                </View>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.profileButton}>
+                <Image 
+                  source={{ uri: 'https://i.pravatar.cc/100?img=12' }} 
+                  style={styles.profileImage}
+                />
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
-        <TouchableOpacity 
-          style={styles.profileButton}
-          onPress={() => navigation.navigate('Profile')}
-        >
-          <Image 
-            source={{ uri: userProfile?.profileImage || 'https://via.placeholder.com/50' }} 
-            style={styles.profileImage}
+
+        {/* Search Bar */}
+        <View style={{ paddingHorizontal: 20, marginTop: 16, marginBottom: 12 }}>
+          <SearchBar
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholder="Search for services or contractors"
           />
-        </TouchableOpacity>
-      </View>
+        </View>
 
-      {/* Quick Actions */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Quick Actions</Text>
+        {/* Quick Actions */}
         <View style={styles.quickActions}>
-          <TouchableOpacity style={styles.actionButton}>
-            <View style={[styles.actionIcon, { backgroundColor: '#E3F2FD' }]}>
-              <Text style={[styles.actionEmoji, { color: '#1976D2' }]}>🔍</Text>
-            </View>
-            <Text style={styles.actionText}>Find a Pro</Text>
+          <TouchableOpacity 
+            style={[styles.actionButton, { backgroundColor: colors.primary }]}
+            onPress={() => {
+              // Navigate to ContactSelection screen in the root stack
+              navigation.navigate('ContactSelection', { inviteType: 'contractor' });
+            }}
+          >
+            <Ionicons name="add-circle-outline" size={24} color="#FFFFFF" />
+            <Text style={styles.actionButtonText}>Add Contractors</Text>
           </TouchableOpacity>
-          
-          <TouchableOpacity style={styles.actionButton}>
-            <View style={[styles.actionIcon, { backgroundColor: '#E8F5E9' }]}>
-              <Text style={[styles.actionEmoji, { color: '#388E3C' }]}>💬</Text>
-            </View>
-            <Text style={styles.actionText}>Messages</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity style={styles.actionButton}>
-            <View style={[styles.actionIcon, { backgroundColor: '#FFF3E0' }]}>
-              <Text style={[styles.actionEmoji, { color: '#F57C00' }]}>📅</Text>
-            </View>
-            <Text style={styles.actionText}>Bookings</Text>
+          <TouchableOpacity 
+            style={[styles.actionButton, { backgroundColor: '#10B981' }]}
+            onPress={() => {
+              // Navigate to ContactSelection screen in the root stack
+              navigation.navigate('ContactSelection', { inviteType: 'friend' });
+            }}
+          >
+            <Ionicons name="people-outline" size={24} color="#FFFFFF" />
+            <Text style={styles.actionButtonText}>Invite Friends</Text>
           </TouchableOpacity>
         </View>
-      </View>
 
-      {/* Recommended Contractors */}
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Recommended for You</Text>
-          <TouchableOpacity>
-            <Text style={styles.seeAllText}>See All</Text>
-          </TouchableOpacity>
-        </View>
-        
+        {/* Filter Pills */}
         <ScrollView 
           horizontal 
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.contractorsList}
+          style={styles.filterContainer}
         >
-          {recommendedContractors.map(contractor => (
-            <TouchableOpacity 
-              key={contractor.id} 
-              style={styles.contractorCard}
-              onPress={() => navigation.navigate('ServiceRequestDetail', { requestId: contractor.id })}
+          {filters.map((filter) => (
+            <TouchableOpacity
+              key={filter}
+              style={[
+                styles.filterPill,
+                selectedFilter === filter && styles.filterPillActive
+              ]}
+              onPress={() => setSelectedFilter(filter)}
             >
-              <Image 
-                source={{ uri: contractor.image }} 
-                style={styles.contractorImage}
-                defaultSource={{ uri: 'https://via.placeholder.com/100' }}
-              />
-              <Text style={styles.contractorName} numberOfLines={1}>{contractor.name}</Text>
-              <Text style={styles.contractorCategory}>{contractor.category}</Text>
-              <View style={styles.ratingContainer}>
-                <Text style={styles.ratingText}>★ {contractor.rating}</Text>
-              </View>
+              <Text style={[
+                styles.filterText,
+                selectedFilter === filter && styles.filterTextActive
+              ]}>
+                {filter}
+              </Text>
             </TouchableOpacity>
           ))}
         </ScrollView>
-      </View>
 
-      {/* Recent Activity */}
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Recent Activity</Text>
-          <TouchableOpacity>
-            <Text style={styles.seeAllText}>See All</Text>
-          </TouchableOpacity>
+        {/* Recent Service Complete */}
+        <View style={[styles.recentServiceCard, { backgroundColor: colors.cardBackground }]}>
+          <Text style={[styles.recentServiceTitle, { color: colors.primaryText }]}>Recent Service Complete</Text>
+          <Text style={[styles.recentServiceDescription, { color: colors.secondaryText }]}>
+            {recentService.type} with {recentService.contractor}
+          </Text>
+          <View style={styles.ratingSection}>
+            <View style={styles.stars}>
+              {[1, 2, 3, 4, 5].map((star) => (
+                <TouchableOpacity key={star}>
+                  <Ionicons 
+                    name="star" 
+                    size={24} 
+                    color={star <= recentService.rating ? '#FFC107' : '#E5E7EB'} 
+                    style={styles.star}
+                  />
+                </TouchableOpacity>
+              ))}
+            </View>
+            <TouchableOpacity style={styles.rateServiceButton}>
+              <Text style={styles.rateServiceText}>Rate Service</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-        
-        <View style={styles.activityList}>
-          {recentActivity.map(activity => (
+
+        {/* Recommended Contractors */}
+        <View style={styles.recommendedSection}>
+          <View style={styles.recommendedHeader}>
+            <Text style={[styles.recommendedTitle, { color: colors.primaryText }]}>Recommended Contractors</Text>
+            <TouchableOpacity>
+              <Text style={[styles.seeAllText, { color: colors.primary }]}>See all →</Text>
+            </TouchableOpacity>
+          </View>
+          
+          {recommendedContractors.map((contractor) => (
             <TouchableOpacity 
-              key={activity.id} 
-              style={styles.activityItem}
-              onPress={() => {
-                if (activity.type === 'message') {
-                  navigation.navigate('Messages', { conversationId: '1' });
-                } else if (activity.type === 'booking') {
-                  // Navigate to bookings
-                }
-              }}
+              key={contractor.id} 
+              style={[styles.contractorItem, { borderBottomColor: colors.border }]}
+              onPress={() => navigation.navigate('ContractorProfile' as any, { contractor })}
             >
-              <View style={styles.activityIcon}>
-                {activity.type === 'message' && <Text>💬</Text>}
-                {activity.type === 'booking' && <Text>✅</Text>}
-                {activity.type === 'reminder' && <Text>⏰</Text>}
+              <View style={styles.contractorLeft}>
+                <View style={styles.contractorImageContainer}>
+                  <Image 
+                    source={{ uri: contractor.image }} 
+                    style={styles.contractorImage}
+                  />
+                  <View 
+                    style={[
+                      styles.ratingBadge,
+                      { backgroundColor: getRatingBadgeColor(contractor.ratingCount) }
+                    ]}
+                  >
+                    <Text style={styles.ratingBadgeText}>{contractor.ratingCount}</Text>
+                  </View>
+                </View>
+                <View style={styles.contractorInfo}>
+                  <Text style={[styles.contractorName, { color: colors.primaryText }]}>{contractor.name}</Text>
+                  <Text style={[styles.contractorService, { color: colors.secondaryText }]}>{contractor.service}</Text>
+                  <View style={styles.contractorMeta}>
+                    <Ionicons name="star" size={14} color="#FFC107" />
+                    <Text style={[styles.contractorRating, { color: colors.primaryText }]}>{contractor.rating}</Text>
+                    <Text style={[
+                      styles.availabilityText,
+                      { color: contractor.available ? colors.success : colors.secondaryText }
+                    ]}>
+                      {contractor.available ? 'Available' : 'Unavailable'}
+                    </Text>
+                  </View>
+                </View>
               </View>
-              <View style={styles.activityContent}>
-                <Text style={styles.activityTitle}>{activity.title}</Text>
-                <Text style={styles.activityDescription} numberOfLines={1}>
-                  {activity.description}
-                </Text>
-              </View>
-              <Text style={styles.activityTime}>{activity.time}</Text>
+              <TouchableOpacity style={styles.checkButton}>
+                <Ionicons name="checkmark-circle" size={24} color={colors.success} />
+              </TouchableOpacity>
             </TouchableOpacity>
           ))}
         </View>
-      </View>
-
-      {/* Promo Banner */}
-      <TouchableOpacity style={styles.promoBanner}>
-        <View style={styles.promoContent}>
-          <Text style={styles.promoTitle}>Get 20% Off</Text>
-          <Text style={styles.promoDescription}>On your first booking with a new pro</Text>
-          <Text style={styles.promoCode}>Use code: WELCOME20</Text>
-        </View>
-      </TouchableOpacity>
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#FFFFFF',
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 20,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E9ECEF',
+    alignItems: 'flex-start',
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 16,
+  },
+  headerLeft: {
+    flex: 1,
   },
   greeting: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#212529',
+    fontSize: 24,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginBottom: 4,
   },
-  subtitle: {
+  locationContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  location: {
     fontSize: 14,
-    color: '#6C757D',
-    marginTop: 4,
+    color: '#6B7280',
+    marginLeft: 4,
+  },
+  headerRight: {
+    alignItems: 'flex-end',
+  },
+  darkModeToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  switch: {
+    marginLeft: 8,
+    transform: [{ scale: 0.8 }],
+  },
+  weather: {
+    fontSize: 12,
+    color: '#9CA3AF',
+    marginBottom: 8,
+  },
+  headerIcons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  notificationButton: {
+    position: 'relative',
+    marginRight: 12,
+  },
+  notificationBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    backgroundColor: '#EF4444',
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  notificationBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: 'bold',
   },
   profileButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     overflow: 'hidden',
   },
   profileImage: {
@@ -192,170 +362,235 @@ const styles = StyleSheet.create({
     height: '100%',
     resizeMode: 'cover',
   },
-  section: {
-    marginTop: 16,
-    backgroundColor: '#FFFFFF',
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F3F4F6',
     borderRadius: 12,
-    padding: 16,
-    marginHorizontal: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    marginHorizontal: 20,
+    marginBottom: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
   },
-  sectionHeader: {
+  searchIcon: {
+    marginRight: 8,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    color: '#1F2937',
+  },
+  quickActions: {
+    flexDirection: 'row',
+    paddingHorizontal: 20,
+    marginBottom: 20,
+    gap: 12,
+  },
+  actionButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    borderRadius: 12,
+    gap: 8,
+  },
+  actionButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    marginHorizontal: 20,
+    marginBottom: 16,
+    gap: 12,
+  },
+  addContractorButton: {
+    flex: 1,
+    backgroundColor: '#3B82F6',
+    borderRadius: 12,
+    paddingVertical: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addContractorText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '500',
+    marginLeft: 8,
+  },
+  inviteFriendsButton: {
+    flex: 1,
+    backgroundColor: '#A855F7',
+    borderRadius: 12,
+    paddingVertical: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  inviteFriendsText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '500',
+    marginLeft: 8,
+  },
+  filterContainer: {
+    paddingHorizontal: 20,
+    marginBottom: 20,
+  },
+  filterPill: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 20,
+    marginRight: 8,
+  },
+  filterPillActive: {
+    backgroundColor: '#1F2937',
+  },
+  filterText: {
+    fontSize: 14,
+    color: '#6B7280',
+    fontWeight: '500',
+  },
+  filterTextActive: {
+    color: '#FFFFFF',
+  },
+  recentServiceCard: {
+    marginHorizontal: 20,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 3,
+    marginBottom: 20,
+  },
+  recentServiceTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginBottom: 4,
+  },
+  recentServiceDescription: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginBottom: 16,
+  },
+  ratingSection: {
+    alignItems: 'flex-start',
+  },
+  stars: {
+    flexDirection: 'row',
+    marginBottom: 12,
+  },
+  star: {
+    marginRight: 4,
+  },
+  rateServiceButton: {
+    backgroundColor: '#3B82F6',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  rateServiceText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  recommendedSection: {
+    marginHorizontal: 20,
+    marginBottom: 20,
+  },
+  recommendedHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 16,
   },
-  sectionTitle: {
+  recommendedTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#212529',
+    color: '#1F2937',
   },
   seeAllText: {
-    color: '#0D6EFD',
     fontSize: 14,
+    color: '#3B82F6',
     fontWeight: '500',
   },
-  quickActions: {
+  contractorItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-  },
-  actionButton: {
-    alignItems: 'center',
-    width: '30%',
-  },
-  actionIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  actionEmoji: {
-    fontSize: 24,
-  },
-  actionText: {
-    fontSize: 12,
-    color: '#495057',
-    textAlign: 'center',
-  },
-  contractorsList: {
-    paddingBottom: 8,
-  },
-  contractorCard: {
-    width: 160,
-    marginRight: 12,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#E9ECEF',
-  },
-  contractorImage: {
-    width: '100%',
-    height: 100,
-    backgroundColor: '#F1F3F5',
-  },
-  contractorName: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#212529',
-    marginTop: 8,
-    marginHorizontal: 12,
-  },
-  contractorCategory: {
-    fontSize: 12,
-    color: '#6C757D',
-    marginHorizontal: 12,
-    marginTop: 2,
-  },
-  ratingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 8,
-    marginBottom: 12,
-    marginHorizontal: 12,
-  },
-  ratingText: {
-    fontSize: 12,
-    color: '#FFC107',
-    fontWeight: 'bold',
-    marginLeft: 4,
-  },
-  activityList: {
-    marginTop: 8,
-  },
-  activityItem: {
-    flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#F1F3F5',
+    borderBottomColor: '#F3F4F6',
   },
-  activityIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#F1F3F5',
-    justifyContent: 'center',
+  contractorLeft: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginRight: 12,
-  },
-  activityContent: {
     flex: 1,
   },
-  activityTitle: {
-    fontSize: 14,
+  contractorImageContainer: {
+    position: 'relative',
+    marginRight: 12,
+  },
+  contractorImage: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+  },
+  ratingBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+  },
+  ratingBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
+  contractorInfo: {
+    flex: 1,
+  },
+  contractorName: {
+    fontSize: 16,
     fontWeight: '600',
-    color: '#212529',
+    color: '#1F2937',
     marginBottom: 2,
   },
-  activityDescription: {
-    fontSize: 12,
-    color: '#6C757D',
-  },
-  activityTime: {
-    fontSize: 10,
-    color: '#ADB5BD',
-    marginLeft: 8,
-  },
-  promoBanner: {
-    margin: 16,
-    backgroundColor: '#F8F9FA',
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#E9ECEF',
-    borderStyle: 'dashed',
-  },
-  promoContent: {
-    alignItems: 'center',
-  },
-  promoTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#212529',
+  contractorService: {
+    fontSize: 14,
+    color: '#6B7280',
     marginBottom: 4,
   },
-  promoDescription: {
-    fontSize: 14,
-    color: '#6C757D',
-    marginBottom: 8,
-    textAlign: 'center',
+  contractorMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
-  promoCode: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#0D6EFD',
-    backgroundColor: '#E7F1FF',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 4,
+  contractorRating: {
+    fontSize: 13,
+    color: '#1F2937',
+    fontWeight: '500',
+  },
+  availabilityText: {
+    fontSize: 13,
+    marginLeft: 8,
+  },
+  checkButton: {
+    padding: 8,
   },
 });
 
