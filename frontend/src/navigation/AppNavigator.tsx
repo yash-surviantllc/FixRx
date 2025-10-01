@@ -7,7 +7,7 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Home, Search, User, MessageSquare, Bell } from 'lucide-react-native';
+import { Feather } from '@expo/vector-icons';
 import { View, Text, Platform } from 'react-native';
 
 // Import screens (these will be migrated versions)
@@ -92,7 +92,7 @@ function MainTabNavigator() {
         options={{
           tabBarLabel: 'Home',
           tabBarIcon: ({ color, size }) => (
-            <Home size={size} color={color} />
+            <Feather name="home" size={size} color={color} />
           ),
           headerTitle: 'Dashboard',
         }}
@@ -103,7 +103,7 @@ function MainTabNavigator() {
         options={{
           tabBarLabel: 'Search',
           tabBarIcon: ({ color, size }) => (
-            <Search size={size} color={color} />
+            <Feather name="search" size={size} color={color} />
           ),
           headerTitle: 'Search',
         }}
@@ -114,7 +114,7 @@ function MainTabNavigator() {
         options={{
           tabBarLabel: 'Messages',
           tabBarIcon: ({ color, size }) => (
-            <MessageSquare size={size} color={color} />
+            <Feather name="message-square" size={size} color={color} />
           ),
           headerTitle: 'Messages',
           tabBarBadge: 3, // Example badge
@@ -126,7 +126,7 @@ function MainTabNavigator() {
         options={{
           tabBarLabel: 'Notifications',
           tabBarIcon: ({ color, size }) => (
-            <Bell size={size} color={color} />
+            <Feather name="bell" size={size} color={color} />
           ),
           headerTitle: 'Notifications',
           tabBarBadge: 5, // Example badge
@@ -138,7 +138,7 @@ function MainTabNavigator() {
         options={{
           tabBarLabel: 'Profile',
           tabBarIcon: ({ color, size }) => (
-            <User size={size} color={color} />
+            <Feather name="user" size={size} color={color} />
           ),
           headerTitle: 'Profile',
         }}

@@ -11,7 +11,7 @@ import {
   ActivityIndicator,
   Animated,
 } from 'react-native';
-import { ArrowLeft, Check, X } from 'lucide-react-native';
+import { ArrowLeft, Check, X } from '../../components/ui/icons';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../../types/navigation';
@@ -65,10 +65,11 @@ const EmailAuthScreen: React.FC = () => {
     // Simulate API call
     setTimeout(() => {
       setIsLoading(false);
-      console.log('Magic link sent to:', email);
+      console.log('Email validated:', email);
       setUserEmail(email);
-      navigation.navigate('EmailConfirmation', { email } as { email: string });
-    }, 2000);
+      // Skip the magic link screen and go directly to user type selection
+      navigation.navigate('UserType');
+    }, 1000);
   };
 
   const getInputBorderColor = () => {
@@ -182,7 +183,7 @@ const EmailAuthScreen: React.FC = () => {
               {isLoading ? (
                 <ActivityIndicator color="#FFFFFF" />
               ) : (
-                <Text style={styles.buttonText}>Send Magic Link</Text>
+                <Text style={styles.buttonText}>Continue</Text>
               )}
             </TouchableOpacity>
           </Animated.View>

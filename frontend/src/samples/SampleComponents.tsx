@@ -1,7 +1,7 @@
 // src/samples/AccordionSample.tsx
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
-import { ChevronDown } from 'lucide-react-native';
+import { ChevronDown } from '../components/ui/icons';
 
 // Create a simple Accordion component
 const Accordion = ({ title, children }: { title: string; children: React.ReactNode }) => {

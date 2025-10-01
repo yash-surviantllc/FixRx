@@ -1,6 +1,6 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Home, Search, MessageSquare, User } from 'lucide-react-native';
+import { Feather } from '@expo/vector-icons';
 import { MainTabParamList } from '../types/navigation';
 import { useAppContext } from '../context/AppContext';
 
@@ -21,13 +21,13 @@ function MainTabs() {
       screenOptions={({ route }) => ({
         tabBarIcon: ({ color, size }) => {
           if (route.name === 'Home') {
-            return <Home size={size} color={color} />;
+            return <Feather name="home" size={size} color={color} />;
           } else if (route.name === 'Contractors') {
-            return <Search size={size} color={color} />;
+            return <Feather name="search" size={size} color={color} />;
           } else if (route.name === 'Messages') {
-            return <MessageSquare size={size} color={color} />;
+            return <Feather name="message-square" size={size} color={color} />;
           } else if (route.name === 'Profile') {
-            return <User size={size} color={color} />;
+            return <Feather name="user" size={size} color={color} />;
           }
         },
         tabBarActiveTintColor: '#007AFF',
@@ -39,10 +39,13 @@ function MainTabs() {
         name="Home" 
         component={userType === 'vendor' ? VendorDashboard : ConsumerDashboard} 
       />
-      <Tab.Screen 
-        name="Contractors" 
-        component={AllRecommendationsScreen} 
-      />
+      {/* Only show Contractors tab for consumers */}
+      {userType === 'consumer' && (
+        <Tab.Screen 
+          name="Contractors" 
+          component={AllRecommendationsScreen} 
+        />
+      )}
       <Tab.Screen 
         name="Messages" 
         component={ChatListScreen} 

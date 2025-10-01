@@ -9,27 +9,44 @@ import {
   Animated,
   KeyboardAvoidingView,
   Platform,
-  FlatList,
   TextInput
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../../types/navigation';
 import { useAppContext } from '../../context/AppContext';
+import { MaterialIcons } from '@expo/vector-icons';
 
-// Mock service categories - in a real app, this would come from your backend
-const SERVICE_CATEGORIES = [
-  { id: 'plumbing', name: 'Plumbing' },
-  { id: 'electrical', name: 'Electrical' },
-  { id: 'hvac', name: 'HVAC' },
-  { id: 'cleaning', name: 'Cleaning' },
-  { id: 'landscaping', name: 'Landscaping' },
-  { id: 'painting', name: 'Painting' },
-  { id: 'carpentry', name: 'Carpentry' },
-  { id: 'appliance', name: 'Appliance Repair' },
-  { id: 'handyman', name: 'Handyman Services' },
-  { id: 'other', name: 'Other' },
-];
+const SERVICE_CATEGORIES = {
+  popular: [
+    { id: 'plumbing', name: 'Plumbing', icon: '🔧', demand: 'High demand', color: '#3B82F6' },
+    { id: 'electrical', name: 'Electrical', icon: '⚡', demand: 'High demand', color: '#F59E0B' },
+    { id: 'hvac', name: 'HVAC', icon: '❄️', demand: 'Peak season: Nov-Mar', color: '#10B981' },
+    { id: 'carpentry', name: 'Carpentry', icon: '🔨', demand: '⭐⭐⭐', color: '#8B5CF6' },
+  ],
+  homeMaintenance: [
+    { id: 'plumbing', name: 'Plumbing', icon: '🔧' },
+    { id: 'handyman', name: 'Handyman Services', icon: '🔨' },
+    { id: 'landscaping', name: 'Landscaping', icon: '🌿' },
+    { id: 'houseCleaning', name: 'House Cleaning', icon: '🔵' },
+  ],
+  repairs: [
+    { id: 'roofing', name: 'Roofing', icon: '💎' },
+    { id: 'appliance', name: 'Appliance Repair', icon: '🟠' },
+  ],
+  installation: [
+    { id: 'electrical', name: 'Electrical', icon: '⚡' },
+    { id: 'hvac', name: 'HVAC', icon: '❄️' },
+    { id: 'flooring', name: 'Flooring', icon: '▬' },
+  ],
+  remodeling: [
+    { id: 'carpentry', name: 'Carpentry', icon: '🔨' },
+    { id: 'painting', name: 'Painting', icon: '🔴' },
+  ],
+  emergency: [
+    { id: 'locksmith', name: 'Locksmith', icon: '🔒' },
+  ],
+};
 
 type ServiceSelectionScreenNavigationProp = StackNavigationProp<RootStackParamList, 'VendorServiceSelection'>;
 
@@ -38,7 +55,8 @@ const VendorServiceSelectionScreen: React.FC = () => {
   const { userProfile, setUserProfile } = useAppContext();
   
   const [selectedServices, setSelectedServices] = useState<string[]>(userProfile?.services || []);
-  const [customService, setCustomService] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showAllServices, setShowAllServices] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   
   // Animation values
@@ -71,16 +89,6 @@ const VendorServiceSelectionScreen: React.FC = () => {
     });
   };
 
-  const addCustomService = () => {
-    if (customService.trim() && !selectedServices.includes(customService.trim())) {
-      setSelectedServices(prev => [...prev, customService.trim()]);
-      setCustomService('');
-    }
-  };
-
-  const removeService = (serviceId: string) => {
-    setSelectedServices(prev => prev.filter(id => id !== serviceId));
-  };
 
   const handleSubmit = async () => {
     if (selectedServices.length === 0) {
@@ -97,10 +105,6 @@ const VendorServiceSelectionScreen: React.FC = () => {
         services: selectedServices,
       } as any);
       
-      // In a real app, you would save this to your backend
-      console.log('Saving services:', selectedServices);
-      
-      // Navigate to the next screen
       navigation.navigate('VendorPortfolioUpload');
     } catch (error) {
       console.error('Error saving services:', error);
@@ -110,18 +114,45 @@ const VendorServiceSelectionScreen: React.FC = () => {
     }
   };
 
-  const renderServiceItem = ({ item }: { item: { id: string; name: string } }) => {
-    const isSelected = selectedServices.includes(item.id);
+  const renderPopularService = (service: any) => {
+    const isSelected = selectedServices.includes(service.id);
     
     return (
       <TouchableOpacity
-        style={[styles.serviceItem, isSelected && styles.serviceItemSelected]}
-        onPress={() => toggleService(item.id)}
+        key={service.id}
+        style={[styles.popularServiceCard, isSelected && styles.popularServiceCardSelected]}
+        onPress={() => toggleService(service.id)}
         activeOpacity={0.7}
       >
-        <Text style={[styles.serviceText, isSelected && styles.serviceTextSelected]}>
-          {item.name}
+        <View style={styles.popularServiceHeader}>
+          <Text style={styles.popularServiceIcon}>{service.icon}</Text>
+          <View style={[styles.checkbox, isSelected && styles.checkboxSelected]}>
+            {isSelected && <MaterialIcons name="check" size={16} color="#FFFFFF" />}
+          </View>
+        </View>
+        <Text style={styles.popularServiceName}>{service.name}</Text>
+        <Text style={[styles.popularServiceDemand, { color: service.color }]}>
+          {service.demand}
         </Text>
+      </TouchableOpacity>
+    );
+  };
+
+  const renderCategoryService = (service: any) => {
+    const isSelected = selectedServices.includes(service.id);
+    
+    return (
+      <TouchableOpacity
+        key={service.id}
+        style={styles.categoryServiceItem}
+        onPress={() => toggleService(service.id)}
+        activeOpacity={0.7}
+      >
+        <Text style={styles.categoryServiceIcon}>{service.icon}</Text>
+        <Text style={styles.categoryServiceName}>{service.name}</Text>
+        <View style={[styles.checkbox, isSelected && styles.checkboxSelected]}>
+          {isSelected && <MaterialIcons name="check" size={16} color="#FFFFFF" />}
+        </View>
       </TouchableOpacity>
     );
   };
@@ -134,6 +165,7 @@ const VendorServiceSelectionScreen: React.FC = () => {
       <ScrollView 
         contentContainerStyle={styles.scrollContainer}
         keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
         <Animated.View 
           style={[
@@ -144,70 +176,95 @@ const VendorServiceSelectionScreen: React.FC = () => {
             }
           ]}
         >
-          <Text style={styles.title}>Your Services</Text>
-          <Text style={styles.subtitle}>Select the services you offer</Text>
-          
-          <View style={styles.selectedServicesContainer}>
-            <Text style={styles.sectionTitle}>Selected Services</Text>
-            {selectedServices.length === 0 ? (
-              <Text style={styles.noServicesText}>No services selected yet</Text>
-            ) : (
-              <View style={styles.selectedServicesList}>
-                {selectedServices.map(serviceId => {
-                  const service = SERVICE_CATEGORIES.find(s => s.id === serviceId) || { id: serviceId, name: serviceId };
-                  return (
-                    <View key={service.id} style={styles.selectedService}>
-                      <Text style={styles.selectedServiceText}>{service.name}</Text>
-                      <TouchableOpacity 
-                        onPress={() => removeService(service.id)}
-                        style={styles.removeServiceButton}
-                      >
-                        <Text style={styles.removeServiceText}>×</Text>
-                      </TouchableOpacity>
-                    </View>
-                  );
-                })}
+          {/* Header */}
+          <View style={styles.header}>
+            <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+              <MaterialIcons name="arrow-back" size={24} color="#1F2937" />
+            </TouchableOpacity>
+            <View style={styles.stepInfo}>
+              <Text style={styles.stepText}>Step 2 of 3</Text>
+              <View style={styles.progressBarContainer}>
+                <View style={[styles.progressBar, { width: '67%' }]} />
               </View>
-            )}
+              <Text style={styles.progressText}>67%</Text>
+            </View>
+          </View>
+
+          <Text style={styles.title}>What services do you offer?</Text>
+          <Text style={styles.subtitle}>Select all services you provide</Text>
+          
+          {/* Popular Services Grid */}
+          <View style={styles.popularServicesGrid}>
+            {SERVICE_CATEGORIES.popular.map(service => renderPopularService(service))}
           </View>
           
-          <View style={styles.servicesContainer}>
-            <Text style={styles.sectionTitle}>Available Services</Text>
-            <FlatList
-              data={SERVICE_CATEGORIES}
-              renderItem={renderServiceItem}
-              keyExtractor={item => item.id}
-              numColumns={2}
-              scrollEnabled={false}
-              contentContainerStyle={styles.servicesGrid}
+          {/* Search Bar */}
+          <View style={styles.searchContainer}>
+            <MaterialIcons name="search" size={20} color="#9CA3AF" style={styles.searchIcon} />
+            <TextInput
+              style={styles.searchInput}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              placeholder="Search for more services..."
+              placeholderTextColor="#9CA3AF"
             />
           </View>
           
-          <View style={styles.customServiceContainer}>
-            <Text style={styles.sectionTitle}>Add Custom Service</Text>
-            <View style={styles.customServiceInputContainer}>
-              <TextInput
-                style={styles.customServiceInput}
-                value={customService}
-                onChangeText={setCustomService}
-                placeholder="Enter a service not listed"
-                placeholderTextColor="#9CA3AF"
-                onSubmitEditing={addCustomService}
-              />
-              <TouchableOpacity 
-                style={[
-                  styles.addButton,
-                  (!customService.trim() || selectedServices.includes(customService.trim())) && styles.addButtonDisabled
-                ]}
-                onPress={addCustomService}
-                disabled={!customService.trim() || selectedServices.includes(customService.trim())}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.addButtonText}>Add</Text>
+          {/* Popular Tags */}
+          <View style={styles.popularTags}>
+            <Text style={styles.popularLabel}>Popular:</Text>
+            {['Handyman', 'Remodeling', 'Repair'].map(tag => (
+              <TouchableOpacity key={tag} style={styles.tag} activeOpacity={0.7}>
+                <Text style={styles.tagText}>{tag}</Text>
               </TouchableOpacity>
-            </View>
+            ))}
           </View>
           
+          {/* View All Services Collapsible */}
+          <TouchableOpacity 
+            style={styles.viewAllButton}
+            onPress={() => setShowAllServices(!showAllServices)}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.viewAllText}>View all services</Text>
+            <MaterialIcons 
+              name={showAllServices ? "keyboard-arrow-up" : "keyboard-arrow-down"} 
+              size={24} 
+              color="#3B82F6" 
+            />
+          </TouchableOpacity>
+          
+          {/* All Services Categories */}
+          {showAllServices && (
+            <View style={styles.allServicesContainer}>
+              <View style={styles.categorySection}>
+                <Text style={styles.categoryTitle}>Home Maintenance</Text>
+                {SERVICE_CATEGORIES.homeMaintenance.map(service => renderCategoryService(service))}
+              </View>
+              
+              <View style={styles.categorySection}>
+                <Text style={styles.categoryTitle}>Repairs</Text>
+                {SERVICE_CATEGORIES.repairs.map(service => renderCategoryService(service))}
+              </View>
+              
+              <View style={styles.categorySection}>
+                <Text style={styles.categoryTitle}>Installation</Text>
+                {SERVICE_CATEGORIES.installation.map(service => renderCategoryService(service))}
+              </View>
+              
+              <View style={styles.categorySection}>
+                <Text style={styles.categoryTitle}>Remodeling</Text>
+                {SERVICE_CATEGORIES.remodeling.map(service => renderCategoryService(service))}
+              </View>
+              
+              <View style={styles.categorySection}>
+                <Text style={styles.categoryTitle}>Emergency</Text>
+                {SERVICE_CATEGORIES.emergency.map(service => renderCategoryService(service))}
+              </View>
+            </View>
+          )}
+          
+          {/* Continue Button */}
           <TouchableOpacity 
             style={[
               styles.button, 
@@ -218,7 +275,7 @@ const VendorServiceSelectionScreen: React.FC = () => {
             activeOpacity={0.8}
           >
             <Text style={styles.buttonText}>
-              {isLoading ? 'Saving...' : 'Continue to Portfolio'}
+              {isLoading ? 'Saving...' : 'Continue'}
             </Text>
           </TouchableOpacity>
         </Animated.View>
@@ -235,148 +292,207 @@ const styles = StyleSheet.create({
   scrollContainer: {
     flexGrow: 1,
     padding: 24,
-    paddingTop: 40,
   },
   content: {
     flex: 1,
   },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#1F2937',
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#6B7280',
-    textAlign: 'center',
-    marginBottom: 32,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1F2937',
-    marginBottom: 12,
-  },
-  selectedServicesContainer: {
-    marginBottom: 24,
-  },
-  noServicesText: {
-    color: '#9CA3AF',
-    fontStyle: 'italic',
-    textAlign: 'center',
-    padding: 16,
-    backgroundColor: '#F9FAFB',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    borderStyle: 'dashed',
-  },
-  selectedServicesList: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
-  selectedService: {
+  header: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#EFF6FF',
-    borderRadius: 16,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    marginRight: 8,
+    marginBottom: 24,
+  },
+  backButton: {
+    padding: 8,
+    marginRight: 16,
+  },
+  stepInfo: {
+    flex: 1,
+  },
+  stepText: {
+    fontSize: 14,
+    color: '#6B7280',
     marginBottom: 8,
   },
-  selectedServiceText: {
-    color: '#1E40AF',
-    fontSize: 14,
-    marginRight: 6,
+  progressBarContainer: {
+    height: 8,
+    backgroundColor: '#E5E7EB',
+    borderRadius: 4,
+    overflow: 'hidden',
+    marginBottom: 4,
   },
-  removeServiceButton: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    backgroundColor: '#BFDBFE',
+  progressBar: {
+    height: '100%',
+    backgroundColor: '#3B82F6',
+    borderRadius: 4,
+  },
+  progressText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1F2937',
+    textAlign: 'right',
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#1F2937',
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 14,
+    color: '#6B7280',
+    marginBottom: 24,
+  },
+  popularServicesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginBottom: 24,
+  },
+  popularServiceCard: {
+    width: '48%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  popularServiceCardSelected: {
+    borderColor: '#3B82F6',
+    borderWidth: 2,
+    backgroundColor: '#EFF6FF',
+  },
+  popularServiceHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  popularServiceIcon: {
+    fontSize: 32,
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: '#D1D5DB',
+    backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  removeServiceText: {
-    color: '#1E40AF',
-    fontSize: 16,
-    lineHeight: 18,
-    marginTop: -1,
-  },
-  servicesContainer: {
-    marginBottom: 24,
-  },
-  servicesGrid: {
-    justifyContent: 'space-between',
-  },
-  serviceItem: {
-    width: '48%',
-    backgroundColor: '#F9FAFB',
-    borderRadius: 8,
-    padding: 16,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-  },
-  serviceItemSelected: {
-    backgroundColor: '#EFF6FF',
+  checkboxSelected: {
+    backgroundColor: '#3B82F6',
     borderColor: '#3B82F6',
   },
-  serviceText: {
-    color: '#4B5563',
-    textAlign: 'center',
-    fontSize: 14,
+  popularServiceName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginBottom: 4,
   },
-  serviceTextSelected: {
-    color: '#1E40AF',
+  popularServiceDemand: {
+    fontSize: 12,
     fontWeight: '500',
   },
-  customServiceContainer: {
-    marginBottom: 24,
-  },
-  customServiceInputContainer: {
+  searchContainer: {
     flexDirection: 'row',
-    marginBottom: 16,
-  },
-  customServiceInput: {
-    flex: 1,
+    alignItems: 'center',
     backgroundColor: '#F9FAFB',
+    borderRadius: 8,
     borderWidth: 1,
     borderColor: '#E5E7EB',
-    borderRadius: 8,
+    paddingHorizontal: 12,
+    marginBottom: 16,
+  },
+  searchIcon: {
+    marginRight: 8,
+  },
+  searchInput: {
+    flex: 1,
     padding: 12,
     fontSize: 16,
     color: '#1F2937',
+  },
+  popularTags: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  popularLabel: {
+    fontSize: 14,
+    color: '#6B7280',
     marginRight: 8,
   },
-  addButton: {
-    backgroundColor: '#3B82F6',
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
+  tag: {
+    backgroundColor: '#F3F4F6',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    marginRight: 8,
   },
-  addButtonDisabled: {
-    backgroundColor: '#9CA3AF',
-  },
-  addButtonText: {
-    color: '#FFFFFF',
-    fontWeight: '600',
+  tagText: {
     fontSize: 14,
+    color: '#374151',
+  },
+  viewAllButton: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    marginBottom: 16,
+  },
+  viewAllText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#3B82F6',
+  },
+  allServicesContainer: {
+    marginBottom: 24,
+  },
+  categorySection: {
+    marginBottom: 24,
+  },
+  categoryTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginBottom: 12,
+  },
+  categoryServiceItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+    padding: 16,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  categoryServiceIcon: {
+    fontSize: 24,
+    marginRight: 12,
+  },
+  categoryServiceName: {
+    flex: 1,
+    fontSize: 16,
+    color: '#374151',
   },
   button: {
     backgroundColor: '#3B82F6',
     padding: 16,
     borderRadius: 8,
     alignItems: 'center',
-    marginTop: 'auto',
+    marginTop: 24,
     marginBottom: 24,
   },
   buttonDisabled: {
-    backgroundColor: '#9CA3AF',
+    backgroundColor: '#E5E7EB',
   },
   buttonText: {
     color: '#FFFFFF',

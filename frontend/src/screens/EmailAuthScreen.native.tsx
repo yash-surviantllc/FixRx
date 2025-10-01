@@ -16,7 +16,7 @@ import {
   ActivityIndicator,
   Animated,
 } from 'react-native';
-import { ArrowLeft, Check, X } from 'lucide-react-native';
+import { ArrowLeft, Check, X } from '../components/ui/icons';
 import { colors, spacing, fontSize, fontWeight } from '../utils/styleConverter';
 
 interface EmailAuthScreenProps {

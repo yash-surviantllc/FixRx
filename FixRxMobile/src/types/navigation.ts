@@ -4,12 +4,15 @@ export type RootStackParamList = {
   EmailAuth: undefined;
   EmailConfirmation: { email: string };
   UserType: undefined;
+  EmailLogin: undefined;
+  CheckEmail: { email: string };
+  UserTypeSelection: { email: string };
   
   // Consumer Onboarding
   ConsumerProfile: undefined;
   
   // Vendor Onboarding
-  VendorProfileSetup: undefined;
+  VendorProfileSetup: { email?: string };
   VendorServiceSelection: undefined;
   VendorPortfolioUpload: undefined;
   
@@ -21,6 +24,13 @@ export type RootStackParamList = {
   
   // Vendor Screens
   VendorDashboard: undefined;
+  VendorAppointments: undefined;
+  VendorEarnings: undefined;
+  VendorClients: undefined;
+  VendorSchedule: undefined;
+  VendorInvitation: undefined;
+  VendorNotifications: undefined;
+  ServiceRequestDetail: { request: any };
   
   // Shared Screens
   AllRecommendations: undefined;
@@ -32,7 +42,6 @@ export type RootStackParamList = {
   SecuritySettings: undefined;
   HelpCenter: undefined;
   AboutUs: undefined;
-  ServiceRequestDetail: { requestId: string };
   ContractorInvitation: undefined;
   ContactSelection: undefined;
   InvitationPreview: undefined;
@@ -40,7 +49,17 @@ export type RootStackParamList = {
   NotificationPermission: undefined;
   NotificationCenter: undefined;
   NotificationSettings: undefined;
-  Messaging: { conversationId: string };
+  Messaging: { 
+    conversationId: string; 
+    customerName?: string;
+    serviceDetails?: {
+      service: string;
+      date: string;
+      time: string;
+      status: string;
+      amount?: number;
+    };
+  };
   ServiceRating: { serviceId: string };
   RatingConfirmation: { rating: number; comment: string };
   FriendsUsingVendor: { vendorId: string };

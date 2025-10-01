@@ -69,6 +69,16 @@ FixRx is a modern client-vendor management platform that connects consumers with
 - 📸 **Photo Uploads** - Showcase work with image galleries
 - 🏆 **Reputation System** - Build trust through verified ratings
 
+### **Mobile App (Vendor Features)**
+- 📱 **Dashboard** - Real-time stats, service requests, and appointments
+- 🔔 **Smart Notifications** - Context-aware notifications with direct navigation
+- 📋 **Request Management** - Sort by newest, distance, priority, or budget
+- 📅 **Schedule Management** - Interactive calendar with time slot management
+- 💰 **Earnings Tracking** - Revenue analytics and payout management
+- 👥 **Client Database** - Searchable client list with complete history
+- 🤝 **Referral System** - Invite other vendors with $50 bonus program
+- 📞 **Quick Actions** - One-tap message, call, accept, or decline
+
 ### **Platform Features**
 - 🔐 **Secure Authentication** - Multi-factor authentication with social login
 - 🌐 **RESTful API** - Comprehensive API for third-party integrations
@@ -91,7 +101,7 @@ FixRx is a modern client-vendor management platform that connects consumers with
 - **Validation**: Joi schema validation
 - **Testing**: Jest + Supertest
 
-### **Frontend**
+### **Frontend (Web)**
 - **Framework**: React 18+ with TypeScript
 - **Build Tool**: Vite
 - **State Management**: Zustand
@@ -99,6 +109,14 @@ FixRx is a modern client-vendor management platform that connects consumers with
 - **HTTP Client**: Axios with interceptors
 - **Animations**: Framer Motion
 - **Icons**: Lucide React
+
+### **Mobile App**
+- **Framework**: React Native with Expo
+- **Navigation**: React Navigation (Stack & Bottom Tabs)
+- **State Management**: Context API
+- **UI Components**: Custom components with Material Icons
+- **TypeScript**: Full type safety
+- **Platform**: iOS, Android, Web
 
 ### **Third-Party Services**
 - **SMS**: Twilio
@@ -204,10 +222,26 @@ cp .env.example .env.local
 npm run dev
 ```
 
-### **4. Access Application**
-- **Frontend**: http://localhost:3001
+### **4. Mobile App Setup (Optional)**
+```bash
+# Navigate to mobile directory
+cd FixRxMobile
+
+# Install dependencies
+npm install
+
+# Start Expo development server
+npm start
+
+# Scan QR code with Expo Go app on your phone
+# Or press 'a' for Android emulator, 'i' for iOS simulator
+```
+
+### **5. Access Application**
+- **Frontend Web**: http://localhost:3001
 - **Backend API**: http://localhost:3000
 - **Health Check**: http://localhost:3000/health
+- **Mobile App**: Expo Go on your device
 
 ---
 
@@ -552,7 +586,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [x] Invitation system
 
 ### **Phase 2** 🚧 (In Progress)
-- [ ] Mobile app (React Native)
+- [x] Mobile app (React Native) - Vendor features complete
 - [ ] Advanced analytics
 - [ ] Payment integration
 - [ ] Video consultations

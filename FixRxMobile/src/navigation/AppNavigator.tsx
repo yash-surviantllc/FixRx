@@ -7,7 +7,7 @@ import React, { useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { Home, Search, User, MessageSquare, Bell } from 'lucide-react-native';
+import { Feather } from '@expo/vector-icons';
 import { View, Text, Platform } from 'react-native';
 import PlaceholderScreen from '../screens/PlaceholderScreen';
 import EmailAuthScreen from '../screens/auth/EmailAuthScreen';
@@ -22,21 +22,21 @@ function MainTabs() {
     <Tab.Navigator
       screenOptions={({ route }) => ({
         tabBarIcon: ({ focused, color, size }) => {
-          let Icon;
+          let iconName;
 
           if (route.name === 'Home') {
-            Icon = Home;
+            iconName = 'home';
           } else if (route.name === 'Search') {
-            Icon = Search;
+            iconName = 'search';
           } else if (route.name === 'Messages') {
-            Icon = MessageSquare;
+            iconName = 'message-square';
           } else if (route.name === 'Notifications') {
-            Icon = Bell;
+            iconName = 'bell';
           } else if (route.name === 'Profile') {
-            Icon = User;
+            iconName = 'user';
           }
 
-          return Icon ? <Icon size={size} color={color} /> : null;
+          return iconName ? <Feather name={iconName} size={size} color={color} /> : null;
         },
         tabBarActiveTintColor: '#3b82f6',
         tabBarInactiveTintColor: 'gray',

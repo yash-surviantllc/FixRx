@@ -14,6 +14,7 @@ import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { MaterialIcons, MaterialCommunityIcons, Feather, Ionicons } from '@expo/vector-icons';
 import { useAppContext } from '../context/AppContext';
+import { useTheme } from '../context/ThemeContext';
 import { RootStackParamList } from '../types/navigation';
 
 type ProfileScreenNavigationProp = StackNavigationProp<RootStackParamList>;
@@ -21,8 +22,14 @@ type ProfileScreenNavigationProp = StackNavigationProp<RootStackParamList>;
 const ProfileScreen: React.FC = () => {
   const navigation = useNavigation<ProfileScreenNavigationProp>();
   const { userProfile, setUserProfile, logout } = useAppContext();
+  const { theme, themeMode, setThemeMode } = useTheme();
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-  const [darkMode, setDarkMode] = useState(false);
+  
+  const darkMode = theme === 'dark';
+  
+  const handleThemeToggle = (value: boolean) => {
+    setThemeMode(value ? 'dark' : 'light');
+  };
 
   // Mock data for user stats
   const userStats = [
@@ -42,7 +49,14 @@ const ProfileScreen: React.FC = () => {
       id: 'notifications',
       title: 'Notifications',
       icon: <Ionicons name="notifications-outline" size={24} color="#6B7280" />,
-      onPress: () => navigation.navigate('NotificationSettings' as never),
+      onPress: () => {
+        const parentNav = navigation.getParent();
+        if (parentNav) {
+          parentNav.navigate('VendorNotifications' as never);
+        } else {
+          navigation.navigate('VendorNotifications' as never);
+        }
+      },
       rightComponent: (
         <Switch
           value={notificationsEnabled}
@@ -65,7 +79,7 @@ const ProfileScreen: React.FC = () => {
           />
           <Switch
             value={darkMode}
-            onValueChange={setDarkMode}
+            onValueChange={handleThemeToggle}
             trackColor={{ false: '#E5E7EB', true: '#D1E0FF' }}
             thumbColor={darkMode ? '#3B82F6' : '#9CA3AF'}
             style={styles.themeSwitch}
@@ -98,6 +112,7 @@ const ProfileScreen: React.FC = () => {
     },
     {
       id: 'about',
+      title: 'About',
       icon: <MaterialIcons name="info-outline" size={24} color="#6B7280" />,
       onPress: () => navigation.navigate('AboutUs' as never),
     },

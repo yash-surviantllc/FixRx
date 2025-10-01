@@ -11,7 +11,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../types/navigation';
-import { Ionicons } from '@expo/vector-icons';
+import { MaterialIcons } from '@expo/vector-icons';
 
 const { width } = Dimensions.get('window');
 
@@ -21,17 +21,15 @@ const WelcomeScreen: React.FC = () => {
   const navigation = useNavigation<WelcomeScreenNavigationProp>();
 
   const handleEmailContinue = () => {
-    navigation.navigate('EmailAuth');
+    navigation.navigate('EmailLogin');
   };
 
   const handleGoogleContinue = () => {
-    // TODO: Implement Google authentication
-    console.log('Continue with Google');
+    // Google authentication to be implemented
   };
 
   const handleFacebookContinue = () => {
-    // TODO: Implement Facebook authentication
-    console.log('Continue with Facebook');
+    // Facebook authentication to be implemented
   };
 
   return (
@@ -40,31 +38,19 @@ const WelcomeScreen: React.FC = () => {
       <View style={styles.content}>
         {/* Logo */}
         <View style={styles.logoContainer}>
-          <View style={styles.logoCircle}>
-            <Text style={styles.logoText}>F</Text>
-          </View>
+          <Text style={styles.logo}>🔧 fixrx</Text>
         </View>
         
         {/* Welcome Text */}
         <View style={styles.textContainer}>
           <Text style={styles.title}>Welcome to FixRx</Text>
           <Text style={styles.subtitle}>
-            Connect with trusted contractors and manage your home services with ease
+            Connect with trusted contractors through your network
           </Text>
         </View>
         
         {/* Buttons */}
         <View style={styles.buttonContainer}>
-          {/* Email Button */}
-          <TouchableOpacity 
-            style={styles.emailButton}
-            onPress={handleEmailContinue}
-            activeOpacity={0.8}
-          >
-            <Ionicons name="mail-outline" size={20} color="#FFFFFF" style={styles.buttonIcon} />
-            <Text style={styles.emailButtonText}>Continue with Email</Text>
-          </TouchableOpacity>
-          
           {/* Google Button */}
           <TouchableOpacity 
             style={styles.googleButton}
@@ -72,7 +58,7 @@ const WelcomeScreen: React.FC = () => {
             activeOpacity={0.8}
           >
             <View style={styles.googleIconContainer}>
-              <Text style={styles.googleIcon}>G</Text>
+              <Text style={styles.googleIconText}>G</Text>
             </View>
             <Text style={styles.googleButtonText}>Continue with Google</Text>
           </TouchableOpacity>
@@ -83,18 +69,25 @@ const WelcomeScreen: React.FC = () => {
             onPress={handleFacebookContinue}
             activeOpacity={0.8}
           >
-            <Ionicons name="logo-facebook" size={20} color="#FFFFFF" style={styles.buttonIcon} />
+            <MaterialIcons name="facebook" size={20} color="#FFFFFF" style={styles.buttonIcon} />
             <Text style={styles.facebookButtonText}>Continue with Facebook</Text>
+          </TouchableOpacity>
+          
+          {/* Email Button */}
+          <TouchableOpacity 
+            style={styles.emailButton}
+            onPress={handleEmailContinue}
+            activeOpacity={0.8}
+          >
+            <MaterialIcons name="email" size={20} color="#0D6EFD" style={styles.buttonIcon} />
+            <Text style={styles.emailButtonText}>Continue with Email</Text>
           </TouchableOpacity>
         </View>
         
         {/* Terms */}
         <View style={styles.termsContainer}>
           <Text style={styles.termsText}>
-            By continuing, you agree to our{' '}
-            <Text style={styles.linkText}>Terms of Service</Text>
-            {' '}and{' '}
-            <Text style={styles.linkText}>Privacy Policy</Text>
+            By continuing, you agree to <Text style={styles.linkText}>Terms</Text> & <Text style={styles.linkText}>Privacy</Text>
           </Text>
         </View>
       </View>
@@ -114,20 +107,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logoContainer: {
-    marginBottom: 40,
+    marginBottom: 60,
   },
-  logoCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: '#2563EB',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  logoText: {
-    fontSize: 36,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
+  logo: {
+    fontSize: 32,
+    fontWeight: '600',
+    color: '#0D6EFD',
   },
   textContainer: {
     alignItems: 'center',
@@ -152,61 +137,64 @@ const styles = StyleSheet.create({
     maxWidth: 340,
     marginBottom: 30,
   },
-  emailButton: {
-    backgroundColor: '#2563EB',
+  googleButton: {
+    backgroundColor: '#0D6EFD',
     borderRadius: 8,
-    paddingVertical: 14,
+    paddingVertical: 16,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
   },
-  emailButtonText: {
+  googleIconContainer: {
+    width: 20,
+    height: 20,
+    marginRight: 8,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 3,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  googleIconText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#4285F4',
+  },
+  googleButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: '600',
+  },
+  facebookButton: {
+    backgroundColor: '#0D6EFD',
+    borderRadius: 8,
+    paddingVertical: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  facebookButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
     marginLeft: 8,
   },
-  googleButton: {
+  emailButton: {
     backgroundColor: '#FFFFFF',
     borderRadius: 8,
-    paddingVertical: 14,
+    paddingVertical: 16,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: '#0D6EFD',
   },
-  googleButtonText: {
-    color: '#374151',
+  emailButtonText: {
+    color: '#0D6EFD',
     fontSize: 16,
-    fontWeight: '500',
-    marginLeft: 8,
-  },
-  googleIconContainer: {
-    width: 20,
-    height: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  googleIcon: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#4285F4',
-  },
-  facebookButton: {
-    backgroundColor: '#1877F2',
-    borderRadius: 8,
-    paddingVertical: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  facebookButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '500',
+    fontWeight: '600',
     marginLeft: 8,
   },
   buttonIcon: {

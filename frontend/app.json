@@ -1,0 +1,20 @@
+{
+  "expo": {
+    "name": "FixRx",
+    "slug": "fixrx",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.fixrx.app"
+    },
+    "android": {
+      "package": "com.fixrx.app"
+    }
+  }
+}
