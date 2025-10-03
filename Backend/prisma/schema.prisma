@@ -1,0 +1,418 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  CONSUMER
+  VENDOR
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  PENDING_VERIFICATION
+}
+
+enum InvitationStatus {
+  PENDING
+  SENT
+  DELIVERED
+  ACCEPTED
+  DECLINED
+  EXPIRED
+}
+
+enum InvitationType {
+  SMS
+  EMAIL
+}
+
+enum ConnectionStatus {
+  PENDING
+  CONNECTED
+  BLOCKED
+  DISCONNECTED
+}
+
+enum LicenseVerificationStatus {
+  PENDING
+  VERIFIED
+  FAILED
+  EXPIRED
+}
+
+enum RatingCategory {
+  COST_EFFECTIVENESS
+  QUALITY_OF_SERVICE
+  TIMELINESS_OF_DELIVERY
+  PROFESSIONALISM
+}
+
+model User {
+  id                String     @id @default(cuid())
+  email             String     @unique
+  phone             String?    @unique
+  firstName         String
+  lastName          String
+  password          String?
+  avatar            String?
+  role              UserRole   @default(CONSUMER)
+  status            UserStatus @default(PENDING_VERIFICATION)
+  emailVerified     Boolean    @default(false)
+  phoneVerified     Boolean    @default(false)
+  auth0Id           String?    @unique
+  lastLoginAt       DateTime?
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+
+  // Enhanced Authentication Fields
+  userType          String     @default("CONSUMER") // For compatibility with enhanced auth
+  isVerified        Boolean    @default(false)
+  isActive          Boolean    @default(true)
+  provider          String     @default("local") // local, google, facebook, github, linkedin
+  providerId        String?    // OAuth provider ID
+  
+  // Email Verification
+  verificationToken String?
+  verificationExpiry DateTime?
+  
+  // Password Reset
+  passwordResetToken String?
+  passwordResetExpiry DateTime?
+  passwordChangedAt  DateTime?
+  
+  // Security Settings
+  securitySettings   Json?      // Store security preferences as JSON
+  lastLoginIP        String?
+  suspendedAt        DateTime?
+  suspensionReason   String?
+  
+  // Metadata
+  bio               String?
+  metroArea         String?
+  preferences       Json?
+
+  // Profile relationships
+  consumer          Consumer?
+  vendor            Vendor?
+  
+  // Activity relationships
+  sentInvitations   Invitation[] @relation("InvitationSender")
+  receivedInvitations Invitation[] @relation("InvitationReceiver")
+  givenRatings      Rating[]     @relation("RatingGiver")
+  receivedRatings   Rating[]     @relation("RatingReceiver")
+  
+  // Enhanced Authentication relationships
+  refreshTokens     RefreshToken[]
+  loginAttempts     LoginAttempt[]
+  twoFactorCodes    TwoFactorCode[]
+  
+  @@index([email])
+  @@index([phone])
+  @@index([auth0Id])
+  @@index([role, status])
+  @@index([provider, providerId])
+  @@index([isActive, isVerified])
+  @@map("users")
+}
+
+model Consumer {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Consumer-specific fields
+  preferences       Json?    // Store consumer preferences as JSON
+  location          Json?    // Store lat/lng and address
+  searchRadius      Int      @default(50) // in kilometers
+  
+  // Relationships
+  connections       Connection[] @relation("ConsumerConnections")
+  sentInvitations   Invitation[] @relation("ConsumerInvitations")
+  ratings           Rating[]     @relation("ConsumerRatings")
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  @@map("consumers")
+}
+
+model Vendor {
+  id                    String                    @id @default(cuid())
+  userId                String                    @unique
+  user                  User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Business Information
+  businessName          String
+  businessDescription   String?
+  businessAddress       String?
+  businessPhone         String?
+  businessEmail         String?
+  website               String?
+  
+  // Service Information
+  serviceCategories     String[]                  // Array of service categories
+  serviceTags           String[]                  // Array of tags for better search
+  serviceArea           Json?                     // Geographic service area
+  hourlyRate            Decimal?                  @db.Decimal(10, 2)
+  availability          Json?                     // Store availability schedule
+  
+  // Location
+  latitude              Decimal?                  @db.Decimal(10, 8)
+  longitude             Decimal?                  @db.Decimal(11, 8)
+  address               String?
+  city                  String?
+  state                 String?
+  zipCode               String?
+  country               String                    @default("US")
+  
+  // Verification
+  licenseNumber         String?
+  licenseVerification   LicenseVerificationStatus @default(PENDING)
+  licenseVerifiedAt     DateTime?
+  licenseExpiresAt      DateTime?
+  
+  // Business metrics
+  totalRatings          Int                       @default(0)
+  averageRating         Decimal                   @default(0) @db.Decimal(3, 2)
+  totalJobs             Int                       @default(0)
+  responseTime          Int?                      // Average response time in minutes
+  
+  // Portfolio
+  portfolioImages       String[]                  // Array of image URLs
+  certifications        String[]                  // Array of certification URLs
+  
+  // Relationships
+  connections           Connection[]              @relation("VendorConnections")
+  receivedInvitations   Invitation[]              @relation("VendorInvitations")
+  receivedRatings       Rating[]                  @relation("VendorRatings")
+  
+  createdAt             DateTime                  @default(now())
+  updatedAt             DateTime                  @updatedAt
+  
+  @@index([latitude, longitude])
+  @@index([serviceCategories])
+  @@index([city, state])
+  @@index([licenseVerification])
+  @@map("vendors")
+}
+
+model Connection {
+  id          String           @id @default(cuid())
+  consumerId  String
+  vendorId    String
+  status      ConnectionStatus @default(PENDING)
+  connectedAt DateTime?
+  notes       String?
+  
+  consumer    Consumer @relation("ConsumerConnections", fields: [consumerId], references: [id], onDelete: Cascade)
+  vendor      Vendor   @relation("VendorConnections", fields: [vendorId], references: [id], onDelete: Cascade)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@unique([consumerId, vendorId])
+  @@index([consumerId, vendorId])
+  @@map("connections")
+}
+
+model Invitation {
+  id              String           @id @default(cuid())
+  senderId        String
+  receiverId      String?          // Nullable for bulk invitations to non-users
+  consumerId      String?          // Link to consumer who sent invitation
+  vendorId        String?          // Link to vendor who received invitation
+  
+  // Invitation details
+  type            InvitationType
+  status          InvitationStatus @default(PENDING)
+  recipientEmail  String?
+  recipientPhone  String?
+  message         String?
+  
+  // Tracking
+  sentAt          DateTime?
+  deliveredAt     DateTime?
+  acceptedAt      DateTime?
+  declinedAt      DateTime?
+  expiresAt       DateTime?
+  
+  // Metadata
+  metadata        Json?            // Store additional tracking data
+  
+  // Relationships
+  sender          User             @relation("InvitationSender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver        User?            @relation("InvitationReceiver", fields: [receiverId], references: [id], onDelete: SetNull)
+  consumer        Consumer?        @relation("ConsumerInvitations", fields: [consumerId], references: [id], onDelete: SetNull)
+  vendor          Vendor?          @relation("VendorInvitations", fields: [vendorId], references: [id], onDelete: SetNull)
+  
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  
+  @@index([status, expiresAt])
+  @@map("invitations")
+}
+
+model Rating {
+  id                    String         @id @default(cuid())
+  giverId               String
+  receiverId            String
+  consumerId            String
+  vendorId              String
+  
+  // Rating categories (1-5 scale)
+  costEffectiveness     Int            @db.SmallInt
+  qualityOfService      Int            @db.SmallInt
+  timelinessOfDelivery  Int            @db.SmallInt
+  professionalism       Int            @db.SmallInt
+  
+  // Overall rating (calculated average)
+  overallRating         Decimal        @db.Decimal(3, 2)
+  
+  // Review details
+  reviewTitle           String?
+  reviewText            String?
+  reviewImages          String[]       // Array of image URLs
+  
+  // Job details
+  jobDescription        String?
+  jobCompletedAt        DateTime?
+  jobValue              Decimal?       @db.Decimal(10, 2)
+  
+  // Metadata
+  isPublic              Boolean        @default(true)
+  isVerified            Boolean        @default(false)
+  helpfulCount          Int            @default(0)
+  
+  // Relationships
+  giver                 User           @relation("RatingGiver", fields: [giverId], references: [id], onDelete: Cascade)
+  receiver              User           @relation("RatingReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+  consumer              Consumer       @relation("ConsumerRatings", fields: [consumerId], references: [id], onDelete: Cascade)
+  vendor                Vendor         @relation("VendorRatings", fields: [vendorId], references: [id], onDelete: Cascade)
+  
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
+  
+  @@unique([giverId, receiverId, consumerId, vendorId])
+  @@index([vendorId, overallRating])
+  @@index([createdAt])
+  @@map("ratings")
+}
+
+model Contact {
+  id              String   @id @default(cuid())
+  userId          String
+  
+  // Contact information
+  firstName       String?
+  lastName        String?
+  email           String?
+  phone           String
+  displayName     String?
+  
+  // Metadata
+  isRegistered    Boolean  @default(false)
+  registeredUserId String?
+  lastSyncAt      DateTime @default(now())
+  
+  // Invitation tracking
+  invitationsSent Int      @default(0)
+  lastInvitedAt   DateTime?
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@unique([userId, phone])
+  @@index([userId, phone])
+  @@map("contacts")
+}
+
+model NotificationToken {
+  id          String   @id @default(cuid())
+  userId      String
+  token       String   @unique
+  platform    String   // 'ios' or 'android'
+  isActive    Boolean  @default(true)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("notification_tokens")
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  userId      String?
+  action      String
+  resource    String
+  resourceId  String?
+  details     Json?
+  ipAddress   String?
+  userAgent   String?
+
+  createdAt   DateTime @default(now())
+
+  @@map("audit_logs")
+}
+
+// Enhanced Authentication Models
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  expiresAt DateTime
+  isRevoked Boolean  @default(false)
+  
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("refresh_tokens")
+}
+
+model LoginAttempt {
+  id          String   @id @default(cuid())
+  email       String
+  userId      String?
+  ipAddress   String?
+  userAgent   String?
+  success     Boolean  @default(false)
+  failureReason String?
+  attemptedAt DateTime @default(now())
+  
+  user        User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([email, attemptedAt])
+  @@index([userId, success])
+  @@index([ipAddress, attemptedAt])
+  @@map("login_attempts")
+}
+
+model TwoFactorCode {
+  id        String   @id @default(cuid())
+  userId    String
+  code      String
+  expiresAt DateTime
+  isUsed    Boolean  @default(false)
+  
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  
+  @@index([userId, expiresAt])
+  @@map("two_factor_codes")
+}
