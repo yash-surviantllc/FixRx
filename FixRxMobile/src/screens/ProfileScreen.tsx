@@ -22,7 +22,7 @@ type ProfileScreenNavigationProp = StackNavigationProp<RootStackParamList>;
 const ProfileScreen: React.FC = () => {
   const navigation = useNavigation<ProfileScreenNavigationProp>();
   const { userProfile, setUserProfile, logout } = useAppContext();
-  const { theme, themeMode, setThemeMode } = useTheme();
+  const { theme, themeMode, setThemeMode, colors } = useTheme();
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   
   const darkMode = theme === 'dark';
@@ -38,17 +38,19 @@ const ProfileScreen: React.FC = () => {
     { label: 'Saved', value: '5' },
   ];
 
+  const iconColor = darkMode ? '#9CA3AF' : '#6B7280';
+  
   const menuItems = [
     {
       id: 'account',
       title: 'Account',
-      icon: <MaterialIcons name="person-outline" size={24} color="#6B7280" />,
+      icon: <MaterialIcons name="person-outline" size={24} color={iconColor} />,
       onPress: () => navigation.navigate('EditProfile' as never),
     },
     {
       id: 'notifications',
       title: 'Notifications',
-      icon: <Ionicons name="notifications-outline" size={24} color="#6B7280" />,
+      icon: <Ionicons name="notifications-outline" size={24} color={iconColor} />,
       onPress: () => {
         const parentNav = navigation.getParent();
         if (parentNav) {
@@ -61,7 +63,7 @@ const ProfileScreen: React.FC = () => {
         <Switch
           value={notificationsEnabled}
           onValueChange={setNotificationsEnabled}
-          trackColor={{ false: '#E5E7EB', true: '#D1E0FF' }}
+          trackColor={{ false: darkMode ? '#374151' : '#E5E7EB', true: '#D1E0FF' }}
           thumbColor={notificationsEnabled ? '#3B82F6' : '#9CA3AF'}
         />
       ),
@@ -69,7 +71,7 @@ const ProfileScreen: React.FC = () => {
     {
       id: 'appearance',
       title: 'Appearance',
-      icon: <Ionicons name="moon-outline" size={24} color="#6B7280" />,
+      icon: <Ionicons name="moon-outline" size={24} color={iconColor} />,
       rightComponent: (
         <View style={styles.themeSwitchContainer}>
           <Ionicons 
@@ -80,7 +82,7 @@ const ProfileScreen: React.FC = () => {
           <Switch
             value={darkMode}
             onValueChange={handleThemeToggle}
-            trackColor={{ false: '#E5E7EB', true: '#D1E0FF' }}
+            trackColor={{ false: darkMode ? '#374151' : '#E5E7EB', true: '#D1E0FF' }}
             thumbColor={darkMode ? '#3B82F6' : '#9CA3AF'}
             style={styles.themeSwitch}
           />
@@ -95,25 +97,25 @@ const ProfileScreen: React.FC = () => {
     {
       id: 'payment',
       title: 'Payment Methods',
-      icon: <MaterialIcons name="payment" size={24} color="#6B7280" />,
+      icon: <MaterialIcons name="payment" size={24} color={iconColor} />,
       onPress: () => navigation.navigate('PaymentMethods' as never),
     },
     {
       id: 'security',
       title: 'Security',
-      icon: <MaterialIcons name="security" size={24} color="#6B7280" />,
+      icon: <MaterialIcons name="security" size={24} color={iconColor} />,
       onPress: () => navigation.navigate('SecuritySettings' as never),
     },
     {
       id: 'help',
       title: 'Help & Support',
-      icon: <MaterialIcons name="help-outline" size={24} color="#6B7280" />,
+      icon: <MaterialIcons name="help-outline" size={24} color={iconColor} />,
       onPress: () => navigation.navigate('HelpCenter' as never),
     },
     {
       id: 'about',
       title: 'About',
-      icon: <MaterialIcons name="info-outline" size={24} color="#6B7280" />,
+      icon: <MaterialIcons name="info-outline" size={24} color={iconColor} />,
       onPress: () => navigation.navigate('AboutUs' as never),
     },
   ];
@@ -140,83 +142,86 @@ const ProfileScreen: React.FC = () => {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView>
         {/* Header */}
-        <View style={styles.header}>
+        <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
           <TouchableOpacity 
             style={styles.backButton}
             onPress={() => navigation.goBack()}
           >
-            <Ionicons name="arrow-back" size={24} color="#1F2937" />
+            <Ionicons name="arrow-back" size={24} color={colors.text} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Profile</Text>
+          <Text style={[styles.headerTitle, { color: colors.text }]}>Profile</Text>
           <TouchableOpacity 
             style={styles.editButton}
             onPress={() => navigation.navigate('EditProfile')}
           >
-            <Feather name="edit-3" size={20} color="#3B82F6" />
+            <Feather name="edit-3" size={20} color={colors.primary} />
           </TouchableOpacity>
         </View>
 
         {/* Profile Info */}
-        <View style={styles.profileSection}>
+        <View style={[styles.profileSection, { backgroundColor: colors.card }]}>
           <View style={styles.avatarContainer}>
             <Image 
               source={{ uri: userProfile?.profileImage || 'https://via.placeholder.com/100' }} 
               style={styles.avatar}
               defaultSource={{ uri: 'https://via.placeholder.com/100' }}
             />
-            <TouchableOpacity style={styles.cameraButton}>
+            <TouchableOpacity 
+              style={styles.cameraButton}
+              onPress={() => navigation.navigate('EditProfile' as never)}
+            >
               <MaterialIcons name="camera-alt" size={18} color="#FFFFFF" />
             </TouchableOpacity>
           </View>
           
-          <Text style={styles.userName}>
+          <Text style={[styles.userName, { color: colors.text }]}>
             {userProfile?.firstName} {userProfile?.lastName}
           </Text>
           
           {userProfile?.businessName && (
-            <Text style={styles.businessName}>
+            <Text style={[styles.businessName, { color: darkMode ? '#9CA3AF' : '#4B5563' }]}>
               {userProfile.businessName}
             </Text>
           )}
           
-          <Text style={styles.userEmail}>
+          <Text style={[styles.userEmail, { color: darkMode ? '#9CA3AF' : '#6B7280' }]}>
             {userProfile?.email}
           </Text>
           
-          <View style={styles.statsContainer}>
+          <View style={[styles.statsContainer, { borderTopColor: colors.border }]}>
             {userStats.map((stat, index) => (
               <View key={index} style={styles.statItem}>
-                <Text style={styles.statValue}>
+                <Text style={[styles.statValue, { color: colors.text }]}>
                   {stat.value}
                   {stat.rating && <Text style={styles.ratingText}>★</Text>}
                 </Text>
-                <Text style={styles.statLabel}>{stat.label}</Text>
+                <Text style={[styles.statLabel, { color: darkMode ? '#9CA3AF' : '#6B7280' }]}>{stat.label}</Text>
               </View>
             ))}
           </View>
         </View>
 
         {/* Menu Items */}
-        <View style={styles.menuContainer}>
+        <View style={[styles.menuContainer, { backgroundColor: colors.card }]}>
           {menuItems.map((item) => (
             <TouchableOpacity 
               key={item.id}
-              style={styles.menuItem}
+              style={[styles.menuItem, { borderBottomColor: colors.border }]}
               onPress={item.onPress}
               disabled={!item.onPress}
             >
               <View style={styles.menuIcon}>{item.icon}</View>
-              <Text style={styles.menuText}>{item.title}</Text>
+              <Text style={[styles.menuText, { color: colors.text }]}>{item.title}</Text>
               {item.rightComponent ? (
                 item.rightComponent
               ) : (
                 <MaterialIcons 
                   name="keyboard-arrow-right" 
                   size={24} 
-                  color="#9CA3AF" 
+                  color={darkMode ? '#6B7280' : '#9CA3AF'} 
                 />
               )}
             </TouchableOpacity>
@@ -225,7 +230,7 @@ const ProfileScreen: React.FC = () => {
 
         {/* Logout Button */}
         <TouchableOpacity 
-          style={styles.logoutButton}
+          style={[styles.logoutButton, { backgroundColor: colors.card }]}
           onPress={handleLogout}
         >
           <MaterialIcons name="logout" size={20} color="#EF4444" />
@@ -233,10 +238,10 @@ const ProfileScreen: React.FC = () => {
         </TouchableOpacity>
 
         <View style={styles.versionContainer}>
-          <Text style={styles.versionText}>
+          <Text style={[styles.versionText, { color: darkMode ? '#6B7280' : '#9CA3AF' }]}>
             FixRx App v1.0.0
           </Text>
-          <Text style={styles.copyrightText}>
+          <Text style={[styles.copyrightText, { color: darkMode ? '#4B5563' : '#D1D5DB' }]}>
             © 2023 FixRx. All rights reserved.
           </Text>
         </View>

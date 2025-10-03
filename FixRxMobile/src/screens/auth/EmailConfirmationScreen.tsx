@@ -4,6 +4,7 @@ import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../../types/navigation';
 import { useAppContext } from '../../context/AppContext';
+import { useTheme } from '../../context/ThemeContext';
 
 type EmailConfirmationScreenRouteProp = RouteProp<RootStackParamList, 'EmailConfirmation'>;
 type EmailConfirmationScreenNavigationProp = StackNavigationProp<RootStackParamList, 'EmailConfirmation'>;
@@ -13,6 +14,8 @@ const EmailConfirmationScreen: React.FC = () => {
   const route = useRoute<EmailConfirmationScreenRouteProp>();
   const { email } = route.params;
   const { setUserEmail } = useAppContext();
+  const { theme, colors } = useTheme();
+  const darkMode = theme === 'dark';
   
   // Animation values
   const fadeAnim = useRef(new Animated.Value(0)).current;

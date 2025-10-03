@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Dimensions, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useTheme } from '../../context/ThemeContext';
 
 const { width } = Dimensions.get('window');
 
@@ -16,6 +17,8 @@ interface Transaction {
 
 const EarningsScreen: React.FC = () => {
   const navigation = useNavigation();
+  const { theme, colors } = useTheme();
+  const darkMode = theme === 'dark';
   const [selectedPeriod, setSelectedPeriod] = useState<'week' | 'month' | 'year'>('month');
 
   const handleGoBack = React.useCallback(() => {
@@ -84,15 +87,15 @@ const EarningsScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         <TouchableOpacity onPress={handleGoBack} activeOpacity={0.7}>
-          <MaterialIcons name="arrow-back" size={24} color="#212529" />
+          <MaterialIcons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Earnings</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>Earnings</Text>
         <TouchableOpacity>
-          <MaterialIcons name="file-download" size={24} color="#212529" />
+          <MaterialIcons name="file-download" size={24} color={colors.text} />
         </TouchableOpacity>
       </View>
 

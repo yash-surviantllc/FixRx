@@ -59,6 +59,7 @@ export type RootStackParamList = {
       status: string;
       amount?: number;
     };
+    showAcceptanceMessage?: boolean;
   };
   ServiceRating: { serviceId: string };
   RatingConfirmation: { rating: number; comment: string };

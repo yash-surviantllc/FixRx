@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, TextInput, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useTheme } from '../../context/ThemeContext';
 
 interface Client {
   id: string;
@@ -16,6 +17,8 @@ interface Client {
 
 const ClientsScreen: React.FC = () => {
   const navigation = useNavigation();
+  const { theme, colors } = useTheme();
+  const darkMode = theme === 'dark';
   const [searchQuery, setSearchQuery] = useState('');
 
   const handleGoBack = React.useCallback(() => {
@@ -46,80 +49,80 @@ const ClientsScreen: React.FC = () => {
   ];
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         <TouchableOpacity onPress={handleGoBack} activeOpacity={0.7}>
-          <MaterialIcons name="arrow-back" size={24} color="#212529" />
+          <MaterialIcons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Clients</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>Clients</Text>
         <TouchableOpacity onPress={() => Alert.alert('Add Client', 'Add a new client')}>
-          <MaterialIcons name="person-add" size={24} color="#212529" />
+          <MaterialIcons name="person-add" size={24} color={colors.text} />
         </TouchableOpacity>
       </View>
 
-      <View style={styles.searchContainer}>
-        <MaterialIcons name="search" size={20} color="#6C757D" />
+      <View style={[styles.searchContainer, { backgroundColor: colors.card }]}>
+        <MaterialIcons name="search" size={20} color={darkMode ? '#9CA3AF' : '#6C757D'} />
         <TextInput
-          style={styles.searchInput}
+          style={[styles.searchInput, { color: colors.text }]}
           placeholder="Search clients..."
-          placeholderTextColor="#ADB5BD"
+          placeholderTextColor={darkMode ? '#6B7280' : '#ADB5BD'}
           value={searchQuery}
           onChangeText={setSearchQuery}
         />
       </View>
 
-      <View style={styles.statsRow}>
+      <View style={[styles.statsRow, { backgroundColor: colors.card }]}>
         <View style={styles.statItem}>
-          <Text style={styles.statValue}>{clients.length}</Text>
-          <Text style={styles.statLabel}>Total Clients</Text>
+          <Text style={[styles.statValue, { color: colors.text }]}>{clients.length}</Text>
+          <Text style={[styles.statLabel, { color: darkMode ? '#9CA3AF' : '#6C757D' }]}>Total Clients</Text>
         </View>
-        <View style={styles.statDivider} />
+        <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
         <View style={styles.statItem}>
-          <Text style={styles.statValue}>$2,130</Text>
-          <Text style={styles.statLabel}>Total Revenue</Text>
+          <Text style={[styles.statValue, { color: colors.text }]}>$2,130</Text>
+          <Text style={[styles.statLabel, { color: darkMode ? '#9CA3AF' : '#6C757D' }]}>Total Revenue</Text>
         </View>
       </View>
 
       <ScrollView style={styles.content}>
         {clients.map((client) => (
-          <View key={client.id} style={styles.clientCard}>
+          <View key={client.id} style={[styles.clientCard, { backgroundColor: colors.card }]}>
             <View style={styles.clientHeader}>
-              <View style={styles.clientAvatar}>
-                <Text style={styles.clientAvatarText}>{client.name.charAt(0)}</Text>
+              <View style={[styles.clientAvatar, { backgroundColor: colors.primary }]}>
+                <Text style={[styles.clientAvatarText, { color: '#FFFFFF' }]}>{client.name.charAt(0)}</Text>
               </View>
               <View style={styles.clientInfo}>
-                <Text style={styles.clientName}>{client.name}</Text>
-                <Text style={styles.clientEmail}>{client.email}</Text>
-                <Text style={styles.clientPhone}>{client.phone}</Text>
+                <Text style={[styles.clientName, { color: colors.text }]}>{client.name}</Text>
+                <Text style={[styles.clientEmail, { color: darkMode ? '#9CA3AF' : '#6C757D' }]}>{client.email}</Text>
+                <Text style={[styles.clientPhone, { color: darkMode ? '#9CA3AF' : '#6C757D' }]}>{client.phone}</Text>
               </View>
             </View>
 
             <View style={styles.clientStats}>
               <View style={styles.clientStatItem}>
-                <MaterialIcons name="work" size={16} color="#6C757D" />
-                <Text style={styles.clientStatText}>{client.totalJobs} jobs</Text>
+                <MaterialIcons name="work" size={16} color={darkMode ? '#9CA3AF' : '#6C757D'} />
+                <Text style={[styles.clientStatText, { color: darkMode ? '#D1D5DB' : '#6C757D' }]}>{client.totalJobs} jobs</Text>
               </View>
               <View style={styles.clientStatItem}>
-                <MaterialIcons name="attach-money" size={16} color="#6C757D" />
-                <Text style={styles.clientStatText}>${client.totalSpent}</Text>
+                <MaterialIcons name="attach-money" size={16} color={darkMode ? '#9CA3AF' : '#6C757D'} />
+                <Text style={[styles.clientStatText, { color: darkMode ? '#D1D5DB' : '#6C757D' }]}>${client.totalSpent}</Text>
               </View>
             </View>
 
             <View style={styles.clientActions}>
               <TouchableOpacity 
-                style={styles.actionBtn}
+                style={[styles.actionBtn, { backgroundColor: colors.secondary }]}
                 onPress={() => Alert.alert('Message', `Send message to ${client.name}`)}
               >
-                <MaterialIcons name="message" size={18} color="#0D6EFD" />
+                <MaterialIcons name="message" size={18} color={colors.primary} />
               </TouchableOpacity>
               <TouchableOpacity 
-                style={styles.actionBtn}
+                style={[styles.actionBtn, { backgroundColor: colors.secondary }]}
                 onPress={() => Alert.alert('Call', `Call ${client.phone}`)}
               >
-                <MaterialIcons name="call" size={18} color="#0D6EFD" />
+                <MaterialIcons name="call" size={18} color={colors.primary} />
               </TouchableOpacity>
               <TouchableOpacity 
-                style={styles.actionBtnPrimary}
+                style={[styles.actionBtnPrimary, { backgroundColor: colors.primary }]}
                 onPress={() => Alert.alert('Client Profile', `${client.name}\n${client.email}\nTotal Jobs: ${client.totalJobs}\nTotal Spent: $${client.totalSpent}`)}
               >
                 <Text style={styles.actionBtnPrimaryText}>View Profile</Text>

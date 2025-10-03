@@ -15,6 +15,7 @@ import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../../types/navigation';
 import { useAppContext } from '../../context/AppContext';
+import { useTheme } from '../../context/ThemeContext';
 import { MaterialIcons } from '@expo/vector-icons';
 
 const SERVICE_CATEGORIES = {
@@ -53,6 +54,8 @@ type ServiceSelectionScreenNavigationProp = StackNavigationProp<RootStackParamLi
 const VendorServiceSelectionScreen: React.FC = () => {
   const navigation = useNavigation<ServiceSelectionScreenNavigationProp>();
   const { userProfile, setUserProfile } = useAppContext();
+  const { theme, colors } = useTheme();
+  const darkMode = theme === 'dark';
   
   const [selectedServices, setSelectedServices] = useState<string[]>(userProfile?.services || []);
   const [searchQuery, setSearchQuery] = useState('');
@@ -86,6 +89,24 @@ const VendorServiceSelectionScreen: React.FC = () => {
       } else {
         return [...prev, serviceId];
       }
+    });
+  };
+
+  // Map Popular chips to actual service IDs in our categories
+  const handlePopularTagPress = (tag: string) => {
+    const tagMapping: { [key: string]: string[] } = {
+      Handyman: ['handyman'],
+      Remodeling: ['carpentry', 'painting'],
+      Repair: ['roofing', 'appliance'],
+    };
+
+    const serviceIdsToAdd = tagMapping[tag as keyof typeof tagMapping];
+    if (!serviceIdsToAdd) return;
+
+    setSelectedServices(prev => {
+      const next = new Set(prev);
+      serviceIdsToAdd.forEach(id => next.add(id));
+      return Array.from(next);
     });
   };
 
@@ -214,7 +235,12 @@ const VendorServiceSelectionScreen: React.FC = () => {
           <View style={styles.popularTags}>
             <Text style={styles.popularLabel}>Popular:</Text>
             {['Handyman', 'Remodeling', 'Repair'].map(tag => (
-              <TouchableOpacity key={tag} style={styles.tag} activeOpacity={0.7}>
+              <TouchableOpacity
+                key={tag}
+                style={styles.tag}
+                activeOpacity={0.7}
+                onPress={() => handlePopularTagPress(tag)}
+              >
                 <Text style={styles.tagText}>{tag}</Text>
               </TouchableOpacity>
             ))}

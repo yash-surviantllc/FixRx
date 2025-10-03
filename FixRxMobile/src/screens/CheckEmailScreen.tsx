@@ -3,18 +3,25 @@ import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Linking } from 
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useTheme } from '../context/ThemeContext';
+import { useAppContext } from '../context/AppContext';
 import { RootStackParamList } from '../types/navigation';
 
 type CheckEmailScreenNavigationProp = StackNavigationProp<RootStackParamList, 'CheckEmail'>;
 
 const CheckEmailScreen: React.FC = () => {
   const navigation = useNavigation<CheckEmailScreenNavigationProp>();
+  const { theme, colors } = useTheme();
+  const darkMode = theme === 'dark';
+  const { setUserEmail } = useAppContext();
   const route = useRoute();
   const { email } = route.params as { email: string };
 
   const handleDemoLink = () => {
-    // Simulate email verification
-    navigation.navigate('UserTypeSelection', { email });
+    // Simulate email verification and set email in context
+    console.log('Demo link clicked, setting email in context:', email);
+    setUserEmail(email);
+    navigation.navigate('UserType');
   };
 
   const handleResend = () => {
@@ -26,7 +33,7 @@ const CheckEmailScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <TouchableOpacity 
         style={styles.backButton}
         onPress={() => navigation.goBack()}

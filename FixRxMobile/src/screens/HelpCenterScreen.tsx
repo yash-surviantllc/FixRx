@@ -2,9 +2,12 @@ import React from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useTheme } from '../context/ThemeContext';
 
 const HelpCenterScreen: React.FC = () => {
   const navigation = useNavigation();
+  const { theme, colors } = useTheme();
+  const darkMode = theme === 'dark';
 
   const helpTopics = [
     { id: 1, title: 'Getting Started', icon: 'play-circle-outline' },
@@ -15,59 +18,61 @@ const HelpCenterScreen: React.FC = () => {
     { id: 6, title: 'Troubleshooting', icon: 'build' },
   ];
 
+  const iconColor = darkMode ? '#9CA3AF' : '#6B7280';
+
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.header, { borderBottomColor: colors.border }]}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <MaterialIcons name="arrow-back" size={24} color="#000" />
+          <MaterialIcons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Help & Support</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>Help & Support</Text>
         <View style={{ width: 24 }} />
       </View>
 
       <ScrollView style={styles.content}>
         <View style={styles.searchSection}>
-          <View style={styles.searchBox}>
-            <MaterialIcons name="search" size={20} color="#9CA3AF" />
-            <Text style={styles.searchPlaceholder}>Search for help...</Text>
+          <View style={[styles.searchBox, { backgroundColor: colors.secondary }]}>
+            <MaterialIcons name="search" size={20} color={darkMode ? '#6B7280' : '#9CA3AF'} />
+            <Text style={[styles.searchPlaceholder, { color: darkMode ? '#6B7280' : '#9CA3AF' }]}>Search for help...</Text>
           </View>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Browse Topics</Text>
+        <View style={[styles.section, { borderTopColor: colors.border }]}>
+          <Text style={[styles.sectionTitle, { color: iconColor }]}>Browse Topics</Text>
           {helpTopics.map((topic) => (
-            <TouchableOpacity key={topic.id} style={styles.topicItem}>
-              <MaterialIcons name={topic.icon as any} size={24} color="#2563EB" />
-              <Text style={styles.topicText}>{topic.title}</Text>
-              <MaterialIcons name="chevron-right" size={24} color="#9CA3AF" />
+            <TouchableOpacity key={topic.id} style={[styles.topicItem, { backgroundColor: colors.background }]}>
+              <MaterialIcons name={topic.icon as any} size={24} color={colors.primary} />
+              <Text style={[styles.topicText, { color: colors.text }]}>{topic.title}</Text>
+              <MaterialIcons name="chevron-right" size={24} color={darkMode ? '#6B7280' : '#9CA3AF'} />
             </TouchableOpacity>
           ))}
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Contact Us</Text>
+        <View style={[styles.section, { borderTopColor: colors.border }]}>
+          <Text style={[styles.sectionTitle, { color: iconColor }]}>Contact Us</Text>
           
           <TouchableOpacity style={styles.contactItem}>
-            <MaterialIcons name="email" size={24} color="#6B7280" />
+            <MaterialIcons name="email" size={24} color={iconColor} />
             <View style={styles.contactText}>
-              <Text style={styles.contactTitle}>Email Support</Text>
-              <Text style={styles.contactSubtitle}>support@fixrx.com</Text>
+              <Text style={[styles.contactTitle, { color: colors.text }]}>Email Support</Text>
+              <Text style={[styles.contactSubtitle, { color: iconColor }]}>support@fixrx.com</Text>
             </View>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.contactItem}>
-            <MaterialIcons name="phone" size={24} color="#6B7280" />
+            <MaterialIcons name="phone" size={24} color={iconColor} />
             <View style={styles.contactText}>
-              <Text style={styles.contactTitle}>Phone Support</Text>
-              <Text style={styles.contactSubtitle}>1-800-FIXRX-HELP</Text>
+              <Text style={[styles.contactTitle, { color: colors.text }]}>Phone Support</Text>
+              <Text style={[styles.contactSubtitle, { color: iconColor }]}>1-800-FIXRX-HELP</Text>
             </View>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.contactItem}>
-            <MaterialIcons name="chat" size={24} color="#6B7280" />
+            <MaterialIcons name="chat" size={24} color={iconColor} />
             <View style={styles.contactText}>
-              <Text style={styles.contactTitle}>Live Chat</Text>
-              <Text style={styles.contactSubtitle}>Available 24/7</Text>
+              <Text style={[styles.contactTitle, { color: colors.text }]}>Live Chat</Text>
+              <Text style={[styles.contactSubtitle, { color: iconColor }]}>Available 24/7</Text>
             </View>
           </TouchableOpacity>
         </View>

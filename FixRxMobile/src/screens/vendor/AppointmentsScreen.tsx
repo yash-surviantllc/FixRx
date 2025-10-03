@@ -2,6 +2,7 @@ import React, { useState, useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useTheme } from '../../context/ThemeContext';
 
 type AppointmentStatus = 'upcoming' | 'completed' | 'cancelled';
 
@@ -19,6 +20,8 @@ interface Appointment {
 
 const AppointmentsScreen: React.FC = () => {
   const navigation = useNavigation();
+  const { theme, colors } = useTheme();
+  const darkMode = theme === 'dark';
   const [selectedFilter, setSelectedFilter] = useState<AppointmentStatus>('upcoming');
 
   const handleGoBack = React.useCallback(() => {
@@ -167,32 +170,34 @@ const AppointmentsScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.secondary }]}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         <TouchableOpacity onPress={handleGoBack} activeOpacity={0.7}>
-          <MaterialIcons name="arrow-back" size={24} color="#212529" />
+          <MaterialIcons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Appointments</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>Appointments</Text>
         <TouchableOpacity>
-          <MaterialIcons name="search" size={24} color="#212529" />
+          <MaterialIcons name="search" size={24} color={colors.text} />
         </TouchableOpacity>
       </View>
 
       {/* Filter Tabs */}
-      <View style={styles.filterContainer}>
+      <View style={[styles.filterContainer, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         {filters.map((filter) => (
           <TouchableOpacity
             key={filter.key}
             style={[
               styles.filterTab,
-              selectedFilter === filter.key && styles.filterTabActive,
+              { backgroundColor: colors.secondary },
+              selectedFilter === filter.key && { backgroundColor: colors.primary },
             ]}
             onPress={() => setSelectedFilter(filter.key)}
           >
             <Text
               style={[
                 styles.filterText,
+                { color: darkMode ? '#9CA3AF' : '#6C757D' },
                 selectedFilter === filter.key && styles.filterTextActive,
               ]}
             >
@@ -201,12 +206,14 @@ const AppointmentsScreen: React.FC = () => {
             <View
               style={[
                 styles.filterBadge,
+                { backgroundColor: darkMode ? '#374151' : '#E9ECEF' },
                 selectedFilter === filter.key && styles.filterBadgeActive,
               ]}
             >
               <Text
                 style={[
                   styles.filterBadgeText,
+                  { color: darkMode ? '#D1D5DB' : '#495057' },
                   selectedFilter === filter.key && styles.filterBadgeTextActive,
                 ]}
               >
@@ -223,7 +230,7 @@ const AppointmentsScreen: React.FC = () => {
           const statusColors = getStatusColor(appointment.status);
           
           return (
-            <TouchableOpacity key={appointment.id} style={styles.appointmentCard}>
+            <TouchableOpacity key={appointment.id} style={[styles.appointmentCard, { backgroundColor: colors.card }]}>
               {/* Status Indicator */}
               <View
                 style={[
@@ -242,8 +249,8 @@ const AppointmentsScreen: React.FC = () => {
                       </Text>
                     </View>
                     <View style={styles.customerDetails}>
-                      <Text style={styles.customerName}>{appointment.customerName}</Text>
-                      <Text style={styles.service}>{appointment.service}</Text>
+                      <Text style={[styles.customerName, { color: colors.text }]}>{appointment.customerName}</Text>
+                      <Text style={[styles.service, { color: darkMode ? '#9CA3AF' : '#6C757D' }]}>{appointment.service}</Text>
                     </View>
                   </View>
                   <View
@@ -261,29 +268,30 @@ const AppointmentsScreen: React.FC = () => {
                 {/* Details */}
                 <View style={styles.detailsContainer}>
                   <View style={styles.detailRow}>
-                    <MaterialIcons name="event" size={16} color="#6C757D" />
-                    <Text style={styles.detailText}>
+                    <MaterialIcons name="event" size={16} color={darkMode ? '#9CA3AF' : '#6C757D'} />
+                    <Text style={[styles.detailText, { color: darkMode ? '#D1D5DB' : '#495057' }]}>
                       {appointment.date} • {appointment.time}
                     </Text>
                   </View>
                   <View style={styles.detailRow}>
-                    <MaterialIcons name="location-on" size={16} color="#6C757D" />
-                    <Text style={styles.detailText}>{appointment.address}</Text>
+                    <MaterialIcons name="location-on" size={16} color={darkMode ? '#9CA3AF' : '#6C757D'} />
+                    <Text style={[styles.detailText, { color: darkMode ? '#D1D5DB' : '#495057' }]}>{appointment.address}</Text>
                   </View>
                   <View style={styles.detailRow}>
-                    <MaterialIcons name="phone" size={16} color="#6C757D" />
-                    <Text style={styles.detailText}>{appointment.phone}</Text>
+                    <MaterialIcons name="phone" size={16} color={darkMode ? '#9CA3AF' : '#6C757D'} />
+                    <Text style={[styles.detailText, { color: darkMode ? '#D1D5DB' : '#495057' }]}>{appointment.phone}</Text>
                   </View>
                 </View>
 
                 {/* Footer */}
-                <View style={styles.cardFooter}>
-                  <Text style={styles.amount}>${appointment.amount}</Text>
+                <View style={[styles.cardFooter, { borderTopColor: colors.border }]}>
+                  <Text style={[styles.amount, { color: colors.text }]}>${appointment.amount}</Text>
                   <View style={styles.actions}>
                     <TouchableOpacity 
-                      style={styles.actionButton}
+                      style={[styles.actionButton, { backgroundColor: colors.secondary }]}
                       onPress={() => {
-                        navigation.navigate('Messaging' as never, {
+                        // @ts-ignore - Navigation typing issue, but functionality works
+                        navigation.navigate('Messaging', {
                           conversationId: appointment.id,
                           customerName: appointment.customerName,
                           serviceDetails: {
@@ -293,21 +301,22 @@ const AppointmentsScreen: React.FC = () => {
                             status: appointment.status,
                             amount: appointment.amount,
                           },
-                        } as never);
+                        });
                       }}
                     >
-                      <MaterialIcons name="message" size={18} color="#0D6EFD" />
+                      <MaterialIcons name="message" size={18} color={colors.primary} />
                     </TouchableOpacity>
                     <TouchableOpacity 
-                      style={styles.actionButton}
+                      style={[styles.actionButton, { backgroundColor: colors.secondary }]}
                       onPress={() => Alert.alert('Call', `Call ${appointment.phone}`)}
                     >
-                      <MaterialIcons name="call" size={18} color="#0D6EFD" />
+                      <MaterialIcons name="call" size={18} color={colors.primary} />
                     </TouchableOpacity>
                     <TouchableOpacity 
-                      style={styles.primaryButton}
+                      style={[styles.primaryButton, { backgroundColor: colors.primary }]}
                       onPress={() => {
-                        navigation.navigate('Messaging' as never, {
+                        // @ts-ignore - Navigation typing issue, but functionality works
+                        navigation.navigate('Messaging', {
                           conversationId: appointment.id,
                           customerName: appointment.customerName,
                           serviceDetails: {
@@ -317,7 +326,7 @@ const AppointmentsScreen: React.FC = () => {
                             status: appointment.status,
                             amount: appointment.amount,
                           },
-                        } as never);
+                        });
                       }}
                     >
                       <Text style={styles.primaryButtonText}>View Details</Text>

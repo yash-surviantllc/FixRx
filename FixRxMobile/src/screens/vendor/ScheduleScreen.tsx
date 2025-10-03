@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useTheme } from '../../context/ThemeContext';
 
 interface TimeSlot {
   time: string;
@@ -11,6 +12,8 @@ interface TimeSlot {
 
 const ScheduleScreen: React.FC = () => {
   const navigation = useNavigation();
+  const { theme, colors } = useTheme();
+  const darkMode = theme === 'dark';
   const [selectedDate, setSelectedDate] = useState(20);
   const [currentMonthIndex, setCurrentMonthIndex] = useState(0);
   
@@ -86,18 +89,18 @@ const ScheduleScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.secondary }]}>
+      <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         <TouchableOpacity onPress={handleGoBack} activeOpacity={0.7}>
-          <MaterialIcons name="arrow-back" size={24} color="#212529" />
+          <MaterialIcons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Schedule</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>Schedule</Text>
         <TouchableOpacity>
-          <MaterialIcons name="settings" size={24} color="#212529" />
+          <MaterialIcons name="settings" size={24} color={colors.text} />
         </TouchableOpacity>
       </View>
 
-      <View style={styles.monthHeader}>
+      <View style={[styles.monthHeader, { backgroundColor: colors.card }]}>
         <TouchableOpacity 
           onPress={() => setCurrentMonthIndex(prev => Math.max(0, prev - 1))}
           disabled={currentMonthIndex === 0}
@@ -106,10 +109,10 @@ const ScheduleScreen: React.FC = () => {
           <MaterialIcons 
             name="chevron-left" 
             size={28} 
-            color={currentMonthIndex === 0 ? '#CCC' : '#212529'} 
+            color={currentMonthIndex === 0 ? (darkMode ? '#4B5563' : '#CCC') : colors.text} 
           />
         </TouchableOpacity>
-        <Text style={styles.monthText}>{currentMonth}</Text>
+        <Text style={[styles.monthText, { color: colors.text }]}>{currentMonth}</Text>
         <TouchableOpacity 
           onPress={() => setCurrentMonthIndex(prev => Math.min(months.length - 1, prev + 1))}
           disabled={currentMonthIndex === months.length - 1}
@@ -118,19 +121,20 @@ const ScheduleScreen: React.FC = () => {
           <MaterialIcons 
             name="chevron-right" 
             size={28} 
-            color={currentMonthIndex === months.length - 1 ? '#CCC' : '#212529'} 
+            color={currentMonthIndex === months.length - 1 ? (darkMode ? '#4B5563' : '#CCC') : colors.text} 
           />
         </TouchableOpacity>
       </View>
 
-      <View style={styles.datesContainer}>
+      <View style={[styles.datesContainer, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           {dates.map((date) => (
             <TouchableOpacity
               key={date.day}
               style={[
                 styles.dateCard,
-                selectedDate === date.day && styles.dateCardActive,
+                { backgroundColor: colors.secondary },
+                selectedDate === date.day && { backgroundColor: colors.primary },
               ]}
               onPress={() => handleDateSelect(date.day)}
               activeOpacity={0.7}
@@ -138,6 +142,7 @@ const ScheduleScreen: React.FC = () => {
               <Text
                 style={[
                   styles.dayName,
+                  { color: darkMode ? '#9CA3AF' : '#6C757D' },
                   selectedDate === date.day && styles.dayNameActive,
                 ]}
               >
@@ -146,6 +151,7 @@ const ScheduleScreen: React.FC = () => {
               <Text
                 style={[
                   styles.dayNumber,
+                  { color: colors.text },
                   selectedDate === date.day && styles.dayNumberActive,
                 ]}
               >
@@ -156,34 +162,34 @@ const ScheduleScreen: React.FC = () => {
         </ScrollView>
       </View>
 
-      <View style={styles.statsCard}>
+      <View style={[styles.statsCard, { backgroundColor: colors.card }]}>
         <View style={styles.statBox}>
           <MaterialIcons name="event-available" size={24} color="#28A745" />
           <View style={styles.statTextBox}>
-            <Text style={styles.statValue}>6</Text>
-            <Text style={styles.statLabel}>Available</Text>
+            <Text style={[styles.statValue, { color: colors.text }]}>6</Text>
+            <Text style={[styles.statLabel, { color: darkMode ? '#9CA3AF' : '#6C757D' }]}>Available</Text>
           </View>
         </View>
         <View style={styles.statBox}>
-          <MaterialIcons name="event-busy" size={24} color="#0D6EFD" />
+          <MaterialIcons name="event-busy" size={24} color={colors.primary} />
           <View style={styles.statTextBox}>
-            <Text style={styles.statValue}>3</Text>
-            <Text style={styles.statLabel}>Booked</Text>
+            <Text style={[styles.statValue, { color: colors.text }]}>3</Text>
+            <Text style={[styles.statLabel, { color: darkMode ? '#9CA3AF' : '#6C757D' }]}>Booked</Text>
           </View>
         </View>
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <Text style={styles.sectionTitle}>Time Slots</Text>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>Time Slots</Text>
         {timeSlots.map((slot, index) => {
-          const colors = getSlotColor(slot.status);
+          const slotColors = getSlotColor(slot.status);
           return (
             <TouchableOpacity
               key={index}
-              style={[styles.timeSlot, { backgroundColor: colors.bg }]}
+              style={[styles.timeSlot, { backgroundColor: slotColors.bg }]}
             >
               <View style={styles.timeSlotLeft}>
-                <Text style={[styles.timeText, { color: colors.text }]}>
+                <Text style={[styles.timeText, { color: slotColors.text }]}>
                   {slot.time}
                 </Text>
                 {slot.status === 'booked' && (
@@ -198,7 +204,7 @@ const ScheduleScreen: React.FC = () => {
               </View>
               {slot.status === 'available' && (
                 <TouchableOpacity 
-                  style={styles.bookButton}
+                  style={[styles.bookButton, { backgroundColor: colors.primary }]}
                   onPress={() => Alert.alert('Block Time', `Block ${slot.time}?`)}
                 >
                   <Text style={styles.bookButtonText}>Block</Text>
@@ -215,7 +221,7 @@ const ScheduleScreen: React.FC = () => {
       </ScrollView>
 
       <TouchableOpacity 
-        style={styles.fab}
+        style={[styles.fab, { backgroundColor: colors.primary }]}
         onPress={() => Alert.alert('Add Slot', 'Add new time slot or appointment')}
       >
         <MaterialIcons name="add" size={28} color="#FFFFFF" />

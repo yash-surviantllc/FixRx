@@ -17,17 +17,21 @@ import * as ImagePicker from 'expo-image-picker';
 import { MaterialIcons } from '@expo/vector-icons';
 import { RootStackParamList } from '../../types/navigation';
 import { useAppContext } from '../../context/AppContext';
+import { useTheme } from '../../context/ThemeContext';
 
 type PortfolioUploadScreenNavigationProp = StackNavigationProp<RootStackParamList, 'VendorPortfolioUpload'>;
 
 const VendorPortfolioUploadScreen: React.FC = () => {
   const navigation = useNavigation<PortfolioUploadScreenNavigationProp>();
-  const { userProfile, setUserProfile } = useAppContext();
+  const { userProfile, setUserProfile, setUserType } = useAppContext();
+  const { theme, colors } = useTheme();
+  const darkMode = theme === 'dark';
   
   const [portfolioItems, setPortfolioItems] = useState<Array<{ id: string; uri: string }>>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [showTips, setShowTips] = useState(false);
+
   
   // Animation values
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -86,15 +90,20 @@ const VendorPortfolioUploadScreen: React.FC = () => {
     try {
       await new Promise(resolve => setTimeout(resolve, 1500));
       
+      // Ensure userType is set before navigation
+      setUserType('vendor');
+
       // Update user profile in context
       setUserProfile({
         ...userProfile,
         portfolio: portfolioItems,
         onboardingComplete: true,
       } as any);
-      
-      // Navigate directly to main app
-      navigation.navigate('MainTabs');
+      // Reset navigation stack to MainTabs to avoid back-navigation to onboarding
+      (navigation as any).reset({
+        index: 0,
+        routes: [{ name: 'MainTabs' }],
+      });
     } catch (error) {
       console.error('Error uploading portfolio:', error);
       Alert.alert('Error', 'Failed to upload portfolio. Please try again.');
@@ -120,18 +129,18 @@ const VendorPortfolioUploadScreen: React.FC = () => {
   );
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <MaterialIcons name="arrow-back" size={24} color="#1F2937" />
+          <MaterialIcons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <View style={styles.stepInfo}>
-          <Text style={styles.stepText}>Step 3 of 3</Text>
-          <View style={styles.progressBarContainer}>
-            <View style={[styles.progressBar, { width: '100%' }]} />
+          <Text style={[styles.stepText, { color: darkMode ? '#9CA3AF' : '#6B7280' }]}>Step 3 of 3</Text>
+          <View style={[styles.progressBarContainer, { backgroundColor: colors.secondary }]}>
+            <View style={[styles.progressBar, { width: '100%', backgroundColor: colors.primary }]} />
           </View>
-          <Text style={styles.progressText}>100%</Text>
+          <Text style={[styles.progressText, { color: colors.text }]}>100%</Text>
         </View>
       </View>
 
@@ -149,10 +158,10 @@ const VendorPortfolioUploadScreen: React.FC = () => {
             }
           ]}
         >
-          <Text style={styles.title}>Showcase your work</Text>
-          <Text style={styles.subtitle}>Add photos of your best projects</Text>
-          <Text style={styles.benefitText}>
-            <MaterialIcons name="star" size={14} color="#3B82F6" /> Contractors with portfolios get 5x more contacts
+          <Text style={[styles.title, { color: colors.text }]}>Showcase your work</Text>
+          <Text style={[styles.subtitle, { color: darkMode ? '#9CA3AF' : '#6B7280' }]}>Add photos of your best projects</Text>
+          <Text style={[styles.benefitText, { color: colors.primary }]}>
+            <MaterialIcons name="star" size={14} color={colors.primary} /> Contractors with portfolios get 5x more contacts
           </Text>
           
           <View style={styles.portfolioContainer}>
@@ -168,23 +177,23 @@ const VendorPortfolioUploadScreen: React.FC = () => {
               />
             ) : (
               <View style={styles.emptyState}>
-                <MaterialIcons name="photo-library" size={48} color="#D1D5DB" />
-                <Text style={styles.emptyStateText}>No photos added yet</Text>
-                <Text style={styles.emptyStateSubtext}>Add photos to showcase your work</Text>
+                <MaterialIcons name="photo-library" size={48} color={darkMode ? '#6B7280' : '#D1D5DB'} />
+                <Text style={[styles.emptyStateText, { color: colors.text }]}>No photos added yet</Text>
+                <Text style={[styles.emptyStateSubtext, { color: darkMode ? '#9CA3AF' : '#6B7280' }]}>Add photos to showcase your work</Text>
               </View>
             )}
             
             {portfolioItems.length < 10 && (
               <TouchableOpacity 
-                style={styles.uploadBox}
+                style={[styles.uploadBox, { backgroundColor: colors.card, borderColor: colors.border }]}
                 onPress={pickImage}
                 disabled={isLoading}
                 activeOpacity={0.7}
               >
-                <MaterialIcons name="cloud-upload" size={48} color="#3B82F6" />
-                <Text style={styles.uploadTitle}>Add your best project photo</Text>
-                <Text style={styles.uploadSubtext}>Tap to take photo or choose from gallery</Text>
-                <Text style={styles.uploadFormat}>JPG, PNG up to 10MB each</Text>
+                <MaterialIcons name="cloud-upload" size={48} color={colors.primary} />
+                <Text style={[styles.uploadTitle, { color: colors.text }]}>Add your best project photo</Text>
+                <Text style={[styles.uploadSubtext, { color: darkMode ? '#9CA3AF' : '#6B7280' }]}>Tap to take photo or choose from gallery</Text>
+                <Text style={[styles.uploadFormat, { color: darkMode ? '#6B7280' : '#9CA3AF' }]}>JPG, PNG up to 10MB each</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -234,11 +243,12 @@ const VendorPortfolioUploadScreen: React.FC = () => {
       </ScrollView>
       
       {/* Fixed Bottom Buttons */}
-      <View style={styles.footer}>
+      <View style={[styles.footer, { backgroundColor: colors.card, borderTopColor: colors.border }]}>
         <TouchableOpacity 
           style={[
             styles.completeButton,
-            (portfolioItems.length === 0 || isUploading) && styles.completeButtonDisabled
+            { backgroundColor: colors.primary },
+            (portfolioItems.length === 0 || isUploading) && { backgroundColor: darkMode ? '#374151' : '#9CA3AF', opacity: 0.5 }
           ]}
           onPress={handleSubmit}
           disabled={portfolioItems.length === 0 || isUploading}
@@ -252,12 +262,23 @@ const VendorPortfolioUploadScreen: React.FC = () => {
         </TouchableOpacity>
         
         <TouchableOpacity 
-          style={styles.skipButton}
-          onPress={() => navigation.navigate('MainTabs')}
+          style={[styles.skipButton, { backgroundColor: colors.secondary }]}
+          onPress={() => {
+            // Ensure userType is set before navigation
+            setUserType('vendor');
+            setUserProfile({
+              ...userProfile,
+              portfolio: [],
+            } as any);
+            (navigation as any).reset({
+              index: 0,
+              routes: [{ name: 'MainTabs' }],
+            });
+          }}
           disabled={isUploading}
           activeOpacity={0.7}
         >
-          <Text style={styles.skipButtonText}>Skip for now</Text>
+          <Text style={[styles.skipButtonText, { color: darkMode ? '#D1D5DB' : '#6B7280' }]}>Skip for now</Text>
         </TouchableOpacity>
       </View>
     </View>

@@ -4,71 +4,115 @@ import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../../types/navigation';
 import { useAppContext } from '../../context/AppContext';
+import { useTheme } from '../../context/ThemeContext';
 import { MaterialIcons } from '@expo/vector-icons';
 
 type VendorDashboardNavigationProp = StackNavigationProp<RootStackParamList, 'VendorDashboard'>;
 
 const VendorDashboard: React.FC = () => {
   const navigation = useNavigation<VendorDashboardNavigationProp>();
-  const { userProfile } = useAppContext();
+  const { userProfile, conversations, serviceRequests } = useAppContext();
+  const { theme, colors } = useTheme();
+  const darkMode = theme === 'dark';
   const [isLoading, setIsLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedRequestSort, setSelectedRequestSort] = useState<'newest' | 'distance' | 'priority' | 'budget'>('newest');
   const [hasNewNotifications, setHasNewNotifications] = useState(true);
+  const [showSortDropdown, setShowSortDropdown] = useState(false);
 
-  const upcomingAppointments = [
-    { 
-      id: '1', 
-      customerName: 'John Smith', 
-      service: 'AC Repair', 
-      date: 'Today', 
+  // Rendering VendorDashboard
+
+  const appointments = [
+    {
+      id: '1',
+      customerName: 'Jennifer Wilson',
+      service: 'Kitchen Sink Repair',
+      date: 'Today',
       time: '2:00 PM - 4:00 PM',
-      status: 'confirmed',
-      amount: 120,
+      amount: 175,
+      status: 'confirmed' as const,
       phone: '(555) 123-4567',
-      address: '123 Main St, Apt 4B'
+      avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face',
     },
-    { 
-      id: '2', 
-      customerName: 'Sarah Johnson', 
-      service: 'AC Maintenance', 
-      date: 'Tomorrow', 
-      time: '10:00 AM - 12:00 PM',
-      status: 'confirmed',
-      amount: 89,
-      phone: '(555) 987-6543',
-      address: '456 Oak Ave'
+    {
+      id: '2',
+      customerName: 'Lisa Martinez',
+      service: 'Appliance Repair',
+      date: 'Tomorrow',
+      time: '2:00 PM - 4:00 PM',
+      amount: 150,
+      status: 'confirmed' as const,
+      phone: '(555) 234-5678',
+      avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&h=150&fit=crop&crop=face',
+    },
+    {
+      id: '3',
+      customerName: 'David Thompson',
+      service: 'General Maintenance',
+      date: 'Friday',
+      time: '9:00 AM - 11:00 AM',
+      amount: 100,
+      status: 'confirmed' as const,
+      phone: '(555) 345-6789',
+      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face',
     },
   ];
 
-  const recentMessages = [
-    { id: '1', customerName: 'Michael Brown', message: 'Hi, I need to reschedule my appointment...', time: '2h ago', unread: true },
-    { id: '2', customerName: 'Emily Davis', message: 'Thanks for the great service!', time: '1d ago', unread: false },
-  ];
+  // Use the mock appointments as upcoming appointments for now
+  const upcomingAppointments = appointments;
 
-  const newRequests = [
-    { id: '1', customerName: 'Jennifer Wilson', service: 'Plumbing Repair', location: '2.5 miles away', time: '15 min ago', budget: '$150-200', priority: 'high' },
-    { id: '2', customerName: 'Robert Taylor', service: 'Electrical Work', location: '1.2 miles away', time: '1 hour ago', budget: '$100-150', priority: 'medium' },
-    { id: '3', customerName: 'Amanda Clark', service: 'AC Installation', location: '4.8 miles away', time: '3 hours ago', budget: '$300-400', priority: 'low' },
-  ];
+  // Derive recent messages from centralized conversations in AppContext (show latest 2)
+  const recentMessages = (conversations || [])
+    .slice(0, 2)
+    .map((c: any) => ({
+      id: c.id,
+      customerName: c.customerName,
+      message: c.lastMessage,
+      time: c.time,
+      unread: !!c.unread,
+      avatar: c.avatar,
+      serviceDetails: c.serviceDetails,
+    }));
+  
+  // Conversations and service requests are now centralized and automated
 
+  // Use centralized service requests from AppContext (limit to first 3)
+  const newRequests = (serviceRequests || []).slice(0, 3).map(req => ({
+    id: req.id,
+    customerName: req.customerName,
+    service: req.title,
+    location: req.distance,
+    time: req.date,
+    budget: `$${req.budget - 25}-${req.budget + 25}`,
+    priority: req.priority,
+    description: req.description,
+    avatar: `https://images.unsplash.com/photo-${req.id === 'req_1' ? '1494790108755-2616b612b786' : req.id === 'req_2' ? '1472099645785-5658abf4ff4e' : '1438761681033-6461ffad8d80'}?w=150&h=150&fit=crop&crop=face`,
+    timeRange: req.timeRange,
+    status: req.status,
+  }));
+
+  // Apply sorting based on selectedRequestSort
   const sortedRequests = [...newRequests].sort((a, b) => {
-    if (selectedRequestSort === 'newest') return 0; // Already in newest order
-    if (selectedRequestSort === 'distance') {
-      const distA = parseFloat(a.location);
-      const distB = parseFloat(b.location);
-      return distA - distB;
+    switch (selectedRequestSort) {
+      case 'newest':
+        // Parse time strings for sorting (5 min ago < 15 min ago < 1 hr ago < 2 hrs ago)
+        const parseTime = (timeStr: string) => {
+          if (timeStr.includes('min')) return parseInt(timeStr);
+          if (timeStr.includes('hr')) return parseInt(timeStr) * 60;
+          return 0;
+        };
+        return parseTime(a.time) - parseTime(b.time);
+      case 'distance':
+        return parseFloat(a.location) - parseFloat(b.location);
+      case 'priority':
+        const priorityOrder = { high: 3, medium: 2, low: 1 };
+        return priorityOrder[b.priority as keyof typeof priorityOrder] - priorityOrder[a.priority as keyof typeof priorityOrder];
+      case 'budget':
+        const getBudgetMax = (budgetStr: string) => parseInt(budgetStr.split('-')[1].replace('$', ''));
+        return getBudgetMax(b.budget) - getBudgetMax(a.budget);
+      default:
+        return 0;
     }
-    if (selectedRequestSort === 'priority') {
-      const priorityOrder = { high: 0, medium: 1, low: 2 };
-      return priorityOrder[a.priority as keyof typeof priorityOrder] - priorityOrder[b.priority as keyof typeof priorityOrder];
-    }
-    if (selectedRequestSort === 'budget') {
-      const budgetA = parseInt(a.budget.replace(/[^0-9]/g, ''));
-      const budgetB = parseInt(b.budget.replace(/[^0-9]/g, ''));
-      return budgetB - budgetA; // Highest budget first
-    }
-    return 0;
   });
 
   const stats = [
@@ -79,15 +123,15 @@ const VendorDashboard: React.FC = () => {
   ];
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <ScrollView style={[styles.container, { backgroundColor: colors.background }]} showsVerticalScrollIndicator={false}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: colors.card }]}>
         <View style={styles.headerLeft}>
-          <Text style={styles.greeting}>Good afternoon, {userProfile?.firstName || 'asfds'}!</Text>
+          <Text style={[styles.greeting, { color: colors.text }]}>Good afternoon, {userProfile?.firstName || 'asfds'}!</Text>
           <View style={styles.headerMeta}>
             <MaterialIcons name="star" size={16} color="#F59E0B" />
-            <Text style={styles.rating}>4.9</Text>
-            <Text style={styles.metaText}>2 appointments today</Text>
+            <Text style={[styles.rating, { color: colors.text }]}>4.9</Text>
+            <Text style={[styles.metaText, { color: darkMode ? '#9CA3AF' : '#6B7280' }]}>2 appointments today</Text>
           </View>
         </View>
         <TouchableOpacity 
@@ -98,7 +142,7 @@ const VendorDashboard: React.FC = () => {
           }}
           activeOpacity={0.7}
         >
-          <MaterialIcons name="notifications-none" size={28} color="#1F2937" />
+          <MaterialIcons name="notifications-none" size={28} color={colors.text} />
           {hasNewNotifications && <View style={styles.notificationDot} />}
         </TouchableOpacity>
       </View>
@@ -106,18 +150,18 @@ const VendorDashboard: React.FC = () => {
       {/* Stats Grid */}
       <View style={styles.statsGrid}>
         {stats.map((stat, index) => (
-          <View key={index} style={styles.statCard}>
+          <View key={index} style={[styles.statCard, { backgroundColor: colors.card }]}>
             <View style={styles.statHeader}>
-              <View style={[styles.statIconContainer, { backgroundColor: stat.bg }]}>
+              <View style={[styles.statIconContainer, { backgroundColor: darkMode ? '#1E3A8A' : stat.bg }]}>
                 <MaterialIcons name={stat.icon as any} size={20} color={stat.color} />
               </View>
               <View style={styles.changeIndicator}>
                 <MaterialIcons name="trending-up" size={12} color="#10B981" />
-                <Text style={styles.changeText}>{stat.change}</Text>
+                <Text style={[styles.changeText, { color: '#10B981' }]}>{stat.change}</Text>
               </View>
             </View>
-            <Text style={styles.statValue}>{stat.value}</Text>
-            <Text style={styles.statLabel}>{stat.label}</Text>
+            <Text style={[styles.statValue, { color: colors.text }]}>{stat.value}</Text>
+            <Text style={[styles.statLabel, { color: darkMode ? '#9CA3AF' : '#6B7280' }]}>{stat.label}</Text>
           </View>
         ))}
       </View>
@@ -125,12 +169,12 @@ const VendorDashboard: React.FC = () => {
       {/* Upcoming Appointments */}
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Upcoming Appointments</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Upcoming Appointments</Text>
           <TouchableOpacity onPress={() => {
             const parentNav = navigation.getParent();
             if (parentNav) parentNav.navigate('VendorAppointments');
           }}>
-            <Text style={styles.seeAllText}>See All</Text>
+            <Text style={[styles.seeAllText, { color: colors.primary }]}>See All</Text>
           </TouchableOpacity>
         </View>
         
@@ -138,13 +182,13 @@ const VendorDashboard: React.FC = () => {
           upcomingAppointments.map(appointment => (
             <View 
               key={appointment.id} 
-              style={styles.appointmentCard}
+              style={[styles.appointmentCard, { backgroundColor: colors.card }]}
             >
               <View style={styles.appointmentInfo}>
-                <Text style={styles.appointmentService}>{appointment.service}</Text>
-                <Text style={styles.appointmentCustomer}>{appointment.customerName}</Text>
+                <Text style={[styles.appointmentService, { color: colors.text }]}>{appointment.service}</Text>
+                <Text style={[styles.appointmentCustomer, { color: darkMode ? '#9CA3AF' : '#6B7280' }]}>{appointment.customerName}</Text>
                 <View style={styles.appointmentTimeContainer}>
-                  <Text style={styles.appointmentTime}>
+                  <Text style={[styles.appointmentTime, { color: darkMode ? '#D1D5DB' : '#6B7280' }]}>
                     {appointment.date} • {appointment.time}
                   </Text>
                   <View style={[
@@ -156,11 +200,11 @@ const VendorDashboard: React.FC = () => {
                     </Text>
                   </View>
                 </View>
-                <Text style={styles.appointmentAmount}>${appointment.amount}</Text>
+                <Text style={[styles.appointmentAmount, { color: colors.text }]}>${appointment.amount}</Text>
               </View>
               <View style={styles.appointmentActions}>
                 <TouchableOpacity 
-                  style={styles.messageButton}
+                  style={[styles.messageButton, { backgroundColor: darkMode ? '#1E3A8A' : '#EFF6FF' }]}
                   onPress={() => {
                     const parentNav = navigation.getParent();
                     if (parentNav) {
@@ -179,20 +223,26 @@ const VendorDashboard: React.FC = () => {
                   }}
                   activeOpacity={0.7}
                 >
-                  <MaterialIcons name="message" size={14} color="#0D6EFD" />
-                  <Text style={styles.messageButtonText}>Message</Text>
+                  <MaterialIcons name="message" size={14} color={colors.primary} />
+                  <Text style={[styles.messageButtonText, { color: colors.primary }]}>Message</Text>
                 </TouchableOpacity>
                 <TouchableOpacity 
-                  style={styles.viewButton}
+                  style={[styles.viewButton, { backgroundColor: colors.primary }]}
                   onPress={() => {
-                    Alert.alert(
-                      'Appointment Details',
-                      `Service: ${appointment.service}\nCustomer: ${appointment.customerName}\nDate: ${appointment.date}\nTime: ${appointment.time}\nAmount: $${appointment.amount}\nStatus: ${appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}`,
-                      [
-                        { text: 'Call Customer', onPress: () => Alert.alert('Calling', appointment.phone || appointment.customerName) },
-                        { text: 'Close', style: 'cancel' }
-                      ]
-                    );
+                    const parentNav = navigation.getParent();
+                    if (parentNav) {
+                      parentNav.navigate('Messaging', {
+                        conversationId: appointment.id,
+                        customerName: appointment.customerName,
+                        serviceDetails: {
+                          service: appointment.service,
+                          status: appointment.status,
+                          amount: appointment.amount,
+                          date: appointment.date,
+                          time: appointment.time,
+                        },
+                      });
+                    }
                   }}
                   activeOpacity={0.7}
                 >
@@ -204,8 +254,8 @@ const VendorDashboard: React.FC = () => {
           ))
         ) : (
           <View style={styles.emptyState}>
-            <Text style={styles.emptyStateText}>No upcoming appointments</Text>
-            <Text style={styles.emptyStateSubtext}>Your upcoming appointments will appear here</Text>
+            <Text style={[styles.emptyStateText, { color: darkMode ? '#D1D5DB' : '#6B7280' }]}>No upcoming appointments</Text>
+            <Text style={[styles.emptyStateSubtext, { color: darkMode ? '#9CA3AF' : '#9CA3AF' }]}>Your upcoming appointments will appear here</Text>
           </View>
         )}
       </View>
@@ -213,26 +263,21 @@ const VendorDashboard: React.FC = () => {
       {/* New Requests */}
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>New Requests</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>New Requests</Text>
           <TouchableOpacity 
-            style={styles.sortButton}
+            style={[styles.sortButton, { backgroundColor: darkMode ? '#1E3A8A' : '#EFF6FF' }]}
             onPress={() => {
-              Alert.alert(
-                'Sort By',
-                'Choose sorting option',
-                [
-                  { text: 'Newest First', onPress: () => setSelectedRequestSort('newest') },
-                  { text: 'Closest Distance', onPress: () => setSelectedRequestSort('distance') },
-                  { text: 'Highest Priority', onPress: () => setSelectedRequestSort('priority') },
-                  { text: 'Highest Budget', onPress: () => setSelectedRequestSort('budget') },
-                  { text: 'Cancel', style: 'cancel' }
-                ]
-              );
+              // Cycle through sort options
+              const sortOptions: Array<'newest' | 'distance' | 'priority' | 'budget'> = ['newest', 'distance', 'priority', 'budget'];
+              const currentIndex = sortOptions.indexOf(selectedRequestSort);
+              const nextIndex = (currentIndex + 1) % sortOptions.length;
+              const nextSort = sortOptions[nextIndex];
+              setSelectedRequestSort(nextSort);
             }}
             activeOpacity={0.7}
           >
-            <MaterialIcons name="filter-list" size={18} color="#3B82F6" />
-            <Text style={styles.sortButtonText}>Sort: Newest first</Text>
+            <MaterialIcons name="filter-list" size={18} color={colors.primary} />
+            <Text style={[styles.sortButtonText, { color: colors.primary }]}>Sort: {selectedRequestSort === 'newest' ? 'Newest first' : selectedRequestSort === 'distance' ? 'Closest first' : selectedRequestSort === 'priority' ? 'Highest priority' : 'Highest budget'}</Text>
           </TouchableOpacity>
         </View>
         
@@ -242,49 +287,55 @@ const VendorDashboard: React.FC = () => {
             medium: { bg: '#FEF3C7', text: '#D97706' },
             low: { bg: '#DBEAFE', text: '#2563EB' }
           };
-          const colors = priorityColors[request.priority as keyof typeof priorityColors];
+          const priorityColor = priorityColors[request.priority as keyof typeof priorityColors];
           
           return (
-            <View key={request.id} style={styles.requestCard}>
+            <View key={request.id} style={[styles.requestCard, { backgroundColor: colors.card }]}>
               <View style={styles.requestHeader}>
-                <View style={styles.requestAvatar}>
-                  <Text style={styles.requestAvatarText}>👤</Text>
-                </View>
+                <Image 
+                  source={{ uri: request.avatar }} 
+                  style={styles.requestAvatar}
+                />
                 <View style={styles.requestInfo}>
                   <View style={styles.requestNameRow}>
-                    <Text style={styles.requestCustomer}>{request.customerName}</Text>
-                    <View style={styles.distanceBadge}>
-                      <MaterialIcons name="location-on" size={12} color="#6B7280" />
-                      <Text style={styles.distanceText}>2.1 mi</Text>
+                    <Text style={[styles.requestCustomer, { color: colors.text }]}>{request.customerName}</Text>
+                    <View style={[styles.distanceBadge, { backgroundColor: colors.secondary }]}>
+                      <MaterialIcons name="location-on" size={12} color={darkMode ? '#9CA3AF' : '#6B7280'} />
+                      <Text style={[styles.distanceText, { color: darkMode ? '#9CA3AF' : '#6B7280' }]}>{request.location}</Text>
                     </View>
                   </View>
                   <View style={styles.requestServiceRow}>
-                    <Text style={styles.requestService}>{request.service}</Text>
+                    <Text style={[styles.requestService, { color: darkMode ? '#D1D5DB' : '#374151' }]}>{request.service}</Text>
                     <View style={[styles.asapBadge, { backgroundColor: '#FEE2E2' }]}>
                       <Text style={styles.asapText}>ASAP</Text>
                     </View>
                   </View>
-                  <Text style={styles.requestTime}>5 min ago</Text>
+                  <Text style={[styles.requestTime, { color: darkMode ? '#9CA3AF' : '#6B7280' }]}>{request.time}</Text>
                 </View>
               </View>
               
-              <Text style={styles.requestDescription}>
-                Kitchen sink is completely clogged, water backing up
+              <Text style={[styles.requestDescription, { color: darkMode ? '#D1D5DB' : '#374151' }]}>
+                {request.description}
               </Text>
               
               <View style={styles.requestFooter}>
                 <View style={styles.budgetContainer}>
-                  <Text style={styles.budgetLabel}>Budget:</Text>
-                  <Text style={styles.budgetValue}>{request.budget}</Text>
+                  <Text style={[styles.budgetLabel, { color: darkMode ? '#9CA3AF' : '#6B7280' }]}>Budget:</Text>
+                  <Text style={[styles.budgetValue, { color: colors.text }]}>{request.budget}</Text>
                 </View>
                 <TouchableOpacity 
-                  style={styles.viewRequestButton}
+                  style={[styles.viewRequestButton, { backgroundColor: colors.primary }]}
                   onPress={() => {
                     const parentNav = navigation.getParent();
-                    if (parentNav) parentNav.navigate('ServiceRequestDetail', { request });
+                    // Find the full service request data from context
+                    const fullRequest = serviceRequests.find(sr => sr.id === request.id);
+                    if (parentNav && fullRequest) {
+                      parentNav.navigate('ServiceRequestDetail', { request: fullRequest });
+                    }
                   }}
                   activeOpacity={0.7}
                 >
+                  <MaterialIcons name="visibility" size={16} color="#FFFFFF" />
                   <Text style={styles.viewRequestButtonText}>View Request</Text>
                 </TouchableOpacity>
               </View>
@@ -295,18 +346,18 @@ const VendorDashboard: React.FC = () => {
 
       {/* Refer Other Contractors */}
       <View style={styles.section}>
-        <View style={styles.referCard}>
+        <View style={[styles.referCard, { backgroundColor: colors.card }]}>
           <View style={styles.referContent}>
-            <View style={styles.referIconContainer}>
-              <MaterialIcons name="people" size={32} color="#3B82F6" />
+            <View style={[styles.referIconContainer, { backgroundColor: darkMode ? '#1E3A8A' : '#EFF6FF' }]}>
+              <MaterialIcons name="people" size={32} color={colors.primary} />
             </View>
             <View style={styles.referTextContainer}>
-              <Text style={styles.referTitle}>Refer other contractors</Text>
-              <Text style={styles.referSubtitle}>Help fellow contractors join the platform</Text>
+              <Text style={[styles.referTitle, { color: colors.text }]}>Refer other contractors</Text>
+              <Text style={[styles.referSubtitle, { color: darkMode ? '#9CA3AF' : '#6B7280' }]}>Help fellow contractors join the platform</Text>
             </View>
           </View>
           <TouchableOpacity 
-            style={styles.referButton}
+            style={[styles.referButton, { backgroundColor: colors.primary }]}
             onPress={() => {
               const parentNav = navigation.getParent();
               if (parentNav) parentNav.navigate('VendorInvitation');
@@ -321,34 +372,46 @@ const VendorDashboard: React.FC = () => {
       {/* Recent Messages */}
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Messages</Text>
-          <TouchableOpacity onPress={() => navigation.navigate('Messages', { conversationId: '1' })}>
-            <Text style={styles.seeAllText}>View all</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Messages</Text>
+          <TouchableOpacity onPress={() => {
+            const parentNav = navigation.getParent();
+            // Navigate to first conversation or show a message list
+            if (parentNav && recentMessages.length > 0) {
+              parentNav.navigate('Messaging', {
+                conversationId: recentMessages[0].id,
+                customerName: recentMessages[0].customerName,
+                serviceDetails: recentMessages[0].serviceDetails
+              });
+            }
+          }}>
+            <Text style={[styles.seeAllText, { color: colors.primary }]}>View all</Text>
           </TouchableOpacity>
         </View>
         
         {recentMessages.length > 0 ? (
-          recentMessages.map(message => (
+          recentMessages.map((message: any) => (
             <TouchableOpacity 
               key={message.id} 
-              style={styles.messageCard}
+              style={[styles.messageContainer, { backgroundColor: colors.card }]}
               onPress={() => {
                 const parentNav = navigation.getParent();
                 if (parentNav) {
                   parentNav.navigate('Messaging', {
                     conversationId: message.id,
                     customerName: message.customerName,
+                    serviceDetails: message.serviceDetails,
                   });
                 }
               }}
               activeOpacity={0.7}
             >
-              <View style={styles.messageAvatar}>
-                <Text style={styles.messageAvatarText}>
-                  {message.customerName.charAt(0)}
-                </Text>
+              <View style={styles.messageAvatarContainer}>
+                <Image 
+                  source={{ uri: message.avatar }} 
+                  style={styles.messageAvatar}
+                />
                 {message.unread && (
-                  <View style={styles.unreadBadge}>
+                  <View style={styles.messageCard}>
                     <Text style={styles.unreadBadgeText}>!</Text>
                   </View>
                 )}
@@ -358,18 +421,20 @@ const VendorDashboard: React.FC = () => {
                   <Text 
                     style={[
                       styles.messageCustomer,
-                      message.unread && styles.unreadMessage
+                      { color: colors.text },
+                      message.unread && { fontWeight: '600' }
                     ]}
                     numberOfLines={1}
                   >
                     {message.customerName}
                   </Text>
-                  <Text style={styles.messageTime}>{message.time}</Text>
+                  <Text style={[styles.messageTime, { color: darkMode ? '#9CA3AF' : '#6B7280' }]}>{message.time}</Text>
                 </View>
                 <Text 
                   style={[
                     styles.messageText,
-                    message.unread && styles.unreadMessage
+                    { color: darkMode ? '#E5E7EB' : '#6B7280' },
+                    message.unread && { fontWeight: '500', color: colors.text }
                   ]}
                   numberOfLines={1}
                 >
@@ -380,39 +445,39 @@ const VendorDashboard: React.FC = () => {
           ))
         ) : (
           <View style={styles.emptyState}>
-            <Text style={styles.emptyStateText}>No recent messages</Text>
-            <Text style={styles.emptyStateSubtext}>Your messages will appear here</Text>
+            <Text style={[styles.emptyStateText, { color: darkMode ? '#D1D5DB' : '#6B7280' }]}>No recent messages</Text>
+            <Text style={[styles.emptyStateSubtext, { color: darkMode ? '#9CA3AF' : '#9CA3AF' }]}>Your messages will appear here</Text>
           </View>
         )}
       </View>
 
       {/* Your Business */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Your Business</Text>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>Your Business</Text>
         
         {/* Response Time */}
-        <View style={styles.businessCard}>
+        <View style={[styles.businessCard, { backgroundColor: colors.card }]}>
           <View style={styles.businessCardHeader}>
-            <MaterialIcons name="schedule" size={24} color="#3B82F6" />
-            <Text style={styles.businessCardTitle}>Response Time</Text>
+            <MaterialIcons name="schedule" size={24} color={colors.primary} />
+            <Text style={[styles.businessCardTitle, { color: colors.text }]}>Response Time</Text>
           </View>
-          <Text style={styles.businessCardValue}>Average 1.2 hours</Text>
-          <Text style={styles.businessCardSubtext}>(Better than 78% of contractors)</Text>
+          <Text style={[styles.businessCardValue, { color: colors.text }]}>Average 1.2 hours</Text>
+          <Text style={[styles.businessCardSubtext, { color: darkMode ? '#9CA3AF' : '#6B7280' }]}>(Better than 78% of contractors)</Text>
         </View>
         
         {/* Growth Opportunity */}
-        <View style={styles.businessCard}>
+        <View style={[styles.businessCard, { backgroundColor: colors.card }]}>
           <View style={styles.businessCardHeader}>
             <MaterialIcons name="trending-up" size={24} color="#10B981" />
-            <Text style={styles.businessCardTitle}>Growth Opportunity</Text>
+            <Text style={[styles.businessCardTitle, { color: colors.text }]}>Growth Opportunity</Text>
           </View>
-          <Text style={styles.businessCardSubtext}>Consider adding: Bathroom Remodeling (+40% potential revenue)</Text>
+          <Text style={[styles.businessCardSubtext, { color: darkMode ? '#9CA3AF' : '#6B7280' }]}>Consider adding: Bathroom Remodeling (+40% potential revenue)</Text>
         </View>
       </View>
 
       {/* Quick Actions */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Quick Actions</Text>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>Quick Actions</Text>
         <View style={styles.quickActions}>
           <TouchableOpacity 
             style={styles.quickAction}
@@ -422,10 +487,10 @@ const VendorDashboard: React.FC = () => {
             }}
             activeOpacity={0.7}
           >
-            <View style={[styles.quickActionIcon, { backgroundColor: '#E7F5FF' }]}>
-              <MaterialIcons name="event" size={24} color="#0D6EFD" />
+            <View style={[styles.quickActionIcon, { backgroundColor: darkMode ? '#1E3A8A' : '#E7F5FF' }]}>
+              <MaterialIcons name="event" size={24} color={colors.primary} />
             </View>
-            <Text style={styles.quickActionText}>Schedule</Text>
+            <Text style={[styles.quickActionText, { color: colors.text }]}>Schedule</Text>
           </TouchableOpacity>
           
           <TouchableOpacity 
@@ -436,10 +501,10 @@ const VendorDashboard: React.FC = () => {
             }}
             activeOpacity={0.7}
           >
-            <View style={[styles.quickActionIcon, { backgroundColor: '#D4EDDA' }]}>
+            <View style={[styles.quickActionIcon, { backgroundColor: darkMode ? '#064E3B' : '#D4EDDA' }]}>
               <MaterialIcons name="attach-money" size={24} color="#28A745" />
             </View>
-            <Text style={styles.quickActionText}>Earnings</Text>
+            <Text style={[styles.quickActionText, { color: colors.text }]}>Earnings</Text>
           </TouchableOpacity>
           
           <TouchableOpacity 
@@ -450,10 +515,10 @@ const VendorDashboard: React.FC = () => {
             }}
             activeOpacity={0.7}
           >
-            <View style={[styles.quickActionIcon, { backgroundColor: '#FFF3CD' }]}>
+            <View style={[styles.quickActionIcon, { backgroundColor: darkMode ? '#78350F' : '#FFF3CD' }]}>
               <MaterialIcons name="people" size={24} color="#FFC107" />
             </View>
-            <Text style={styles.quickActionText}>Clients</Text>
+            <Text style={[styles.quickActionText, { color: colors.text }]}>Clients</Text>
           </TouchableOpacity>
           
           <TouchableOpacity 
@@ -464,10 +529,10 @@ const VendorDashboard: React.FC = () => {
             }}
             activeOpacity={0.7}
           >
-            <View style={[styles.quickActionIcon, { backgroundColor: '#E1E8F0' }]}>
-              <MaterialIcons name="settings" size={24} color="#6C757D" />
+            <View style={[styles.quickActionIcon, { backgroundColor: colors.secondary }]}>
+              <MaterialIcons name="settings" size={24} color={darkMode ? '#9CA3AF' : '#6C757D'} />
             </View>
-            <Text style={styles.quickActionText}>Settings</Text>
+            <Text style={[styles.quickActionText, { color: colors.text }]}>Settings</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -696,24 +761,15 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
   },
-  messageCard: {
+  messageContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F1F3F5',
+    padding: 16,
+    marginBottom: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
   },
-  messageAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#E9ECEF',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-    position: 'relative',
-  },
-  unreadBadge: {
+  messageCard: {
     position: 'absolute',
     top: -2,
     right: -2,
@@ -730,6 +786,15 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '700',
     color: '#FFFFFF',
+  },
+  messageAvatarContainer: {
+    position: 'relative',
+    marginRight: 12,
+  },
+  messageAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
   },
   messageAvatarText: {
     fontSize: 16,
@@ -803,7 +868,6 @@ const styles = StyleSheet.create({
   },
   quickActionText: {
     fontSize: 12,
-    color: '#495057',
     textAlign: 'center',
   },
   headerRight: {
@@ -983,17 +1047,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 12,
-    marginTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#E9ECEF',
-    paddingTop: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
     gap: 6,
   },
   viewRequestButtonText: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '600',
-    color: '#0D6EFD',
+    color: '#FFFFFF',
   },
   referCard: {
     backgroundColor: '#EFF6FF',

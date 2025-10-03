@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Dimensions } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../../types/navigation';
 import { useAppContext } from '../../context/AppContext';
+import { useTheme } from '../../context/ThemeContext';
 import { Ionicons } from '@expo/vector-icons';
 
 const { width } = Dimensions.get('window');
@@ -12,64 +13,107 @@ type UserTypeScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Use
 
 const UserTypeSelectionScreen: React.FC = () => {
   const navigation = useNavigation<UserTypeScreenNavigationProp>();
-  const { setUserType } = useAppContext();
+  const { setUserType, userEmail } = useAppContext();
+  const { theme, colors } = useTheme();
+  const darkMode = theme === 'dark';
+  const [selectedType, setSelectedType] = useState<'consumer' | 'vendor' | null>(null);
+
+  console.log('UserTypeSelectionScreen rendered with theme:', theme, 'colors:', colors, 'userEmail:', userEmail);
 
   const handleUserTypeSelect = (type: 'consumer' | 'vendor') => {
-    setUserType(type);
-    if (type === 'consumer') {
-      navigation.navigate('ConsumerProfile');
+    console.log('User selected type:', type);
+    setSelectedType(type);
+  };
+
+  const handleContinue = () => {
+    if (!selectedType) return;
+    
+    console.log('Continue pressed with selectedType:', selectedType, 'userEmail:', userEmail);
+    setUserType(selectedType);
+    
+    if (selectedType === 'consumer') {
+      (navigation as any).navigate('ConsumerProfile');
     } else {
-      navigation.navigate('VendorProfileSetup');
+      (navigation as any).navigate('VendorProfileSetup', { email: userEmail });
     }
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.content}>
         {/* Pagination dots */}
         <View style={styles.paginationContainer}>
-          <View style={[styles.paginationDot, styles.paginationDotActive]} />
-          <View style={[styles.paginationDot, styles.paginationDotActive]} />
-          <View style={[styles.paginationDot, styles.paginationDotActive]} />
-          <View style={styles.paginationDot} />
+          <View style={[styles.paginationDot, { backgroundColor: colors.primary }]} />
+          <View style={[styles.paginationDot, { backgroundColor: colors.primary }]} />
+          <View style={[styles.paginationDot, { backgroundColor: colors.primary }]} />
+          <View style={[styles.paginationDot, { backgroundColor: darkMode ? '#374151' : '#D1D5DB' }]} />
         </View>
         
         {/* Title */}
-        <Text style={styles.title}>How will you use FixRx?</Text>
-        <Text style={styles.subtitle}>Choose the option that best describes you</Text>
+        <Text style={[styles.title, { color: colors.text }]}>How will you use FixRx?</Text>
+        <Text style={[styles.subtitle, { color: darkMode ? '#9CA3AF' : '#6B7280' }]}>Choose the option that best describes you</Text>
         
         {/* Option Cards */}
         <View style={styles.optionsContainer}>
           {/* I need services card */}
           <TouchableOpacity 
-            style={styles.optionCard}
+            style={[
+              styles.optionCard, 
+              { backgroundColor: colors.card, borderColor: colors.border },
+              selectedType === 'consumer' && { borderColor: colors.primary, borderWidth: 2 }
+            ]}
             onPress={() => handleUserTypeSelect('consumer')}
             activeOpacity={0.8}
           >
             <View style={styles.iconContainer}>
-              <Ionicons name="home-outline" size={32} color="#3B82F6" />
+              <Ionicons name="home-outline" size={32} color={selectedType === 'consumer' ? colors.primary : '#6B7280'} />
             </View>
-            <Text style={styles.optionTitle}>I need services</Text>
-            <Text style={styles.optionDescription}>
+            <Text style={[styles.optionTitle, { color: colors.text }]}>I need services</Text>
+            <Text style={[styles.optionDescription, { color: darkMode ? '#9CA3AF' : '#6B7280' }]}>
               Find trusted contractors through friends
             </Text>
+            {selectedType === 'consumer' && (
+              <View style={styles.checkmark}>
+                <Ionicons name="checkmark-circle" size={24} color={colors.primary} />
+              </View>
+            )}
           </TouchableOpacity>
           
           {/* I provide services card */}
           <TouchableOpacity 
-            style={styles.optionCard}
+            style={[
+              styles.optionCard, 
+              { backgroundColor: colors.card, borderColor: colors.border },
+              selectedType === 'vendor' && { borderColor: '#F97316', borderWidth: 2 }
+            ]}
             onPress={() => handleUserTypeSelect('vendor')}
             activeOpacity={0.8}
           >
             <View style={styles.iconContainer}>
-              <Ionicons name="hammer-outline" size={32} color="#F97316" />
+              <Ionicons name="hammer-outline" size={32} color={selectedType === 'vendor' ? '#F97316' : '#6B7280'} />
             </View>
-            <Text style={styles.optionTitle}>I provide services</Text>
-            <Text style={styles.optionDescription}>
+            <Text style={[styles.optionTitle, { color: colors.text }]}>I provide services</Text>
+            <Text style={[styles.optionDescription, { color: darkMode ? '#9CA3AF' : '#6B7280' }]}>
               Connect with homeowners who need help
             </Text>
+            {selectedType === 'vendor' && (
+              <View style={styles.checkmark}>
+                <Ionicons name="checkmark-circle" size={24} color="#F97316" />
+              </View>
+            )}
           </TouchableOpacity>
         </View>
+
+        {/* Continue Button */}
+        {selectedType && (
+          <TouchableOpacity 
+            style={[styles.continueButton, { backgroundColor: colors.primary }]}
+            onPress={handleContinue}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.continueButtonText}>Continue</Text>
+          </TouchableOpacity>
+        )}
       </View>
     </SafeAreaView>
   );
@@ -127,6 +171,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     minHeight: 180,
     justifyContent: 'center',
+    position: 'relative',
   },
   iconContainer: {
     marginBottom: 20,
@@ -143,6 +188,25 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     textAlign: 'center',
     lineHeight: 22,
+  },
+  checkmark: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+  },
+  continueButton: {
+    backgroundColor: '#3B82F6',
+    borderRadius: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    marginTop: 32,
+    marginBottom: 20,
+    alignItems: 'center',
+  },
+  continueButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
 

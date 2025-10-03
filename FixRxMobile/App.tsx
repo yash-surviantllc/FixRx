@@ -17,7 +17,6 @@ import CheckEmailScreen from './src/screens/CheckEmailScreen';
 import UserTypeSelection from './src/screens/UserTypeSelectionScreen';
 import Toast from "react-native-toast-message";
 
-
 // Consumer Screens
 import ConsumerProfileSetupScreen from './src/screens/consumer/ConsumerProfileSetupScreen';
 
@@ -39,7 +38,8 @@ import MessagingScreen from './src/screens/MessagingScreen';
 // Main App Navigation
 import MainTabs from './src/navigation/MainTabs';
 
-// Settings Screens
+// Settings & Profile Screens
+import EditProfileScreen from './src/screens/EditProfileScreen';
 import PaymentMethodsScreen from './src/screens/PaymentMethodsScreen';
 import SecuritySettingsScreen from './src/screens/SecuritySettingsScreen';
 import HelpCenterScreen from './src/screens/HelpCenterScreen';
@@ -165,7 +165,7 @@ export default function App() {
               component={MainTabs} 
               options={{
                 gestureEnabled: false,
-                animation: 'fade',
+                animation: 'none',
               }}
             />
             
@@ -215,6 +215,10 @@ export default function App() {
             <Stack.Screen 
               name="AboutUs" 
               component={AboutUsScreen} 
+            />
+            <Stack.Screen 
+              name="EditProfile" 
+              component={EditProfileScreen} 
             />
           </Stack.Navigator>
           </NavigationContainer>

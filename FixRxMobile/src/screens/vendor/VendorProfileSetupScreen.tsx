@@ -7,10 +7,10 @@ import {
   TouchableOpacity, 
   ScrollView, 
   KeyboardAvoidingView, 
-  Platform,
+  Platform, 
+  Animated,
   Alert,
   Image,
-  Animated,
   Modal,
   FlatList
 } from 'react-native';
@@ -18,6 +18,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../../types/navigation';
 import { useAppContext } from '../../context/AppContext';
+import { useTheme } from '../../context/ThemeContext';
 import * as ImagePicker from 'expo-image-picker';
 import { MaterialIcons } from '@expo/vector-icons';
 import Slider from '@react-native-community/slider';
@@ -58,6 +59,8 @@ const VendorProfileSetupScreen: React.FC = () => {
   const route = useRoute();
   const params = route.params as { email?: string } | undefined;
   const { userProfile, setUserProfile } = useAppContext();
+  const { theme, colors } = useTheme();
+  const darkMode = theme === 'dark';
   
   const [currentStep, setCurrentStep] = useState(1); // 1 = Profile & Business & Credentials, 2 = Services, 3 = Portfolio
   const [isLoading, setIsLoading] = useState(false);
@@ -75,6 +78,7 @@ const VendorProfileSetupScreen: React.FC = () => {
     isBonded: false,
     useCurrentLocation: false,
   });
+
   
   const [showMetroDropdown, setShowMetroDropdown] = useState(false);
   const [profileImage, setProfileImage] = useState<string | null>(null);
@@ -84,20 +88,20 @@ const VendorProfileSetupScreen: React.FC = () => {
   const slideUpAnim = useRef(new Animated.Value(20)).current;
 
   React.useEffect(() => {
-    // Entry animations
+    // Entry animations with native driver (now properly configured)
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
         duration: 500,
-        useNativeDriver: true,
+        useNativeDriver: true, // opacity is supported by native driver
       }),
       Animated.spring(slideUpAnim, {
         toValue: 0,
         friction: 6,
-        useNativeDriver: true,
+        useNativeDriver: true, // transform is supported by native driver
       }),
     ]).start();
-  }, []);
+  }, [fadeAnim, slideUpAnim]);
 
   const formatPhoneNumber = (value: string) => {
     // Remove all non-digits

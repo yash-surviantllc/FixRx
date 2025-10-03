@@ -15,12 +15,15 @@ import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../../types/navigation';
 import { useAppContext } from '../../context/AppContext';
+import { useTheme } from '../../context/ThemeContext';
 
 type ConsumerProfileScreenNavigationProp = StackNavigationProp<RootStackParamList, 'ConsumerProfile'>;
 
 const ConsumerProfileSetupScreen: React.FC = () => {
   const navigation = useNavigation<ConsumerProfileScreenNavigationProp>();
   const { userProfile, setUserProfile } = useAppContext();
+  const { theme, colors } = useTheme();
+  const darkMode = theme === 'dark';
   
   const [formData, setFormData] = useState({
     firstName: userProfile?.firstName || '',

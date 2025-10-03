@@ -4,12 +4,17 @@ import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../../types/navigation';
 import { useAppContext } from '../../context/AppContext';
+import { useTheme } from '../../context/ThemeContext';
 
 type ConsumerDashboardNavigationProp = StackNavigationProp<RootStackParamList, 'ConsumerDashboard'>;
 
 const ConsumerDashboard: React.FC = () => {
   const navigation = useNavigation<ConsumerDashboardNavigationProp>();
   const { userProfile } = useAppContext();
+  const { theme, colors } = useTheme();
+  const darkMode = theme === 'dark';
+
+  console.log('ConsumerDashboard rendered with theme:', theme);
 
   // Mock data for recommended contractors
   const recommendedContractors = [
@@ -26,7 +31,7 @@ const ConsumerDashboard: React.FC = () => {
   ];
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
       <View style={styles.header}>
         <View>

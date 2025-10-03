@@ -11,6 +11,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../types/navigation';
+import { useTheme } from '../context/ThemeContext';
 import { MaterialIcons } from '@expo/vector-icons';
 
 const { width } = Dimensions.get('window');
@@ -19,6 +20,8 @@ type WelcomeScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Welc
 
 const WelcomeScreen: React.FC = () => {
   const navigation = useNavigation<WelcomeScreenNavigationProp>();
+  const { theme, colors } = useTheme();
+  const darkMode = theme === 'dark';
 
   const handleEmailContinue = () => {
     navigation.navigate('EmailLogin');

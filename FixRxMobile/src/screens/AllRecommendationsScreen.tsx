@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, TextInput, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../types/navigation';
+import { useTheme } from '../context/ThemeContext';
+import { MaterialIcons } from '@expo/vector-icons';
 
-type AllRecommendationsNavigationProp = StackNavigationProp<RootStackParamList, 'AllRecommendations'>;
+type AllRecommendationsScreenNavigationProp = StackNavigationProp<RootStackParamList, 'AllRecommendations'>;
 
 // Mock data for recommended contractors
 const RECOMMENDED_CONTRACTORS = [
@@ -83,9 +85,11 @@ const CATEGORIES = [
 ];
 
 const AllRecommendationsScreen: React.FC = () => {
-  const navigation = useNavigation<AllRecommendationsNavigationProp>();
+  const navigation = useNavigation<AllRecommendationsScreenNavigationProp>();
+  const { theme, colors } = useTheme();
+  const darkMode = theme === 'dark';
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedCategory, setSelectedCategory] = useState('All');
   const [priceRange, setPriceRange] = useState<string | null>(null);
   const [ratingFilter, setRatingFilter] = useState<number | null>(null);
   const [showFilters, setShowFilters] = useState(false);
@@ -97,7 +101,7 @@ const AllRecommendationsScreen: React.FC = () => {
       contractor.category.toLowerCase().includes(searchQuery.toLowerCase());
     
     // Filter by category
-    const matchesCategory = selectedCategory === 'all' || 
+    const matchesCategory = selectedCategory === 'All' || 
       contractor.category.toLowerCase() === selectedCategory.toLowerCase();
     
     // Filter by price range
@@ -118,7 +122,7 @@ const AllRecommendationsScreen: React.FC = () => {
       style={styles.contractorCard}
       onPress={() => {
         // Navigate to contractor detail screen
-        navigation.navigate('ServiceRequestDetail', { requestId: item.id });
+        (navigation as any).navigate('ServiceRequestDetail', { request: item });
       }}
     >
       <Image 
@@ -164,7 +168,7 @@ const AllRecommendationsScreen: React.FC = () => {
             style={styles.messageButton}
             onPress={() => {
               // Navigate to chat
-              navigation.navigate('Messaging', { conversationId: `convo_${item.id}` });
+              (navigation as any).navigate('Messaging', { conversationId: `convo_${item.id}` });
             }}
           >
             <Text style={styles.messageButtonText}>Message</Text>
@@ -206,7 +210,7 @@ const AllRecommendationsScreen: React.FC = () => {
   );
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Search Bar */}
       <View style={styles.searchContainer}>
         <TextInput
@@ -322,20 +326,17 @@ const AllRecommendationsScreen: React.FC = () => {
       </View>
       
       {/* Contractors List */}
-      <FlatList
-        data={filteredContractors}
-        renderItem={renderContractorItem}
-        keyExtractor={item => item.id}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-        ListEmptyComponent={
+      <View style={styles.listContainer}>
+        {filteredContractors.length > 0 ? (
+          filteredContractors.map((item) => renderContractorItem({ item }))
+        ) : (
           <View style={styles.emptyState}>
             <Text style={styles.emptyStateText}>No contractors found</Text>
             <Text style={styles.emptyStateSubtext}>Try adjusting your search or filters</Text>
           </View>
-        }
-      />
-    </View>
+        )}
+      </View>
+    </ScrollView>
   );
 };
 
@@ -667,6 +668,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#6C757D',
     textAlign: 'center',
+  },
+  listContainer: {
+    flex: 1,
+    paddingHorizontal: 16,
   },
 });
 

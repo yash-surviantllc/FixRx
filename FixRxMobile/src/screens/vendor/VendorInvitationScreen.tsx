@@ -12,6 +12,7 @@ import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../../types/navigation';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useTheme } from '../../context/ThemeContext';
 
 type VendorInvitationNavigationProp = StackNavigationProp<RootStackParamList, 'VendorInvitation'>;
 
@@ -23,6 +24,8 @@ interface Contact {
 
 const VendorInvitationScreen: React.FC = () => {
   const navigation = useNavigation<VendorInvitationNavigationProp>();
+  const { theme, colors } = useTheme();
+  const darkMode = theme === 'dark';
   const [selectedContacts, setSelectedContacts] = useState<string[]>([]);
 
   const contacts: Contact[] = [
@@ -34,97 +37,130 @@ const VendorInvitationScreen: React.FC = () => {
   ];
 
   const toggleContact = (contactId: string) => {
-    setSelectedContacts(prev =>
-      prev.includes(contactId)
+    setSelectedContacts(prev => {
+      const newSelection = prev.includes(contactId)
         ? prev.filter(id => id !== contactId)
-        : [...prev, contactId]
-    );
+        : [...prev, contactId];
+      return newSelection;
+    });
   };
 
   const handleSendInvites = () => {
+    
     if (selectedContacts.length === 0) {
-      Alert.alert('No Contacts Selected', 'Please select at least one contact to invite');
+      Alert.alert(
+        'Select Contacts First', 
+        'Please select at least one contact to send invitations to.',
+        [
+          { text: 'OK', style: 'default' }
+        ]
+      );
       return;
     }
 
-    const selectedNames = contacts
-      .filter(c => selectedContacts.includes(c.id))
-      .map(c => c.name)
-      .join(', ');
+    // Get selected contact details
+    const selectedContactDetails = contacts.filter(c => selectedContacts.includes(c.id));
+    const selectedNames = selectedContactDetails.map(c => c.name).join(', ');
+
+    // Simulate sending SMS to each selected contact
+    selectedContactDetails.forEach(contact => {
+      const inviteMessage = `Hi ${contact.name.split(' ')[0]}! 👋\n\nI'm using FixRx to manage my service business and it's been amazing! They're offering a special bonus for new service providers.\n\nJoin using my referral code: VENDOR2024\n\nDownload the app: https://fixrx.app/invite\n\nYou'll get:\n✅ More customers\n✅ Easy scheduling\n✅ Fast payments\n✅ Special signup bonus\n\nLet me know if you have any questions!`;
+      
+      // In a real app, you would use a library like react-native-sms or Linking API
+      // For now, we're simulating the SMS send
+    });
+
+    const totalEarnings = selectedContacts.length * 30; // $30 per referral
 
     Alert.alert(
-      'Invitations Sent!',
-      `Invitations sent to: ${selectedNames}`,
+      'Invitations Sent Successfully! 🎉',
+      `✅ SMS invitations sent to: ${selectedNames}\n\n💰 Potential earnings: $${totalEarnings}\n\n📱 Each contact received a personalized invitation with your referral code: VENDOR2024\n\nYou'll earn $30 for each person who joins and completes their first job!`,
       [
         {
-          text: 'OK',
-          onPress: () => navigation.navigate('MainTabs'),
+          text: 'Great!',
+          onPress: () => {
+            // Clear selections and go back to dashboard
+            setSelectedContacts([]);
+            // Try different navigation approaches
+            try {
+              navigation.goBack();
+            } catch (error) {
+              navigation.reset({
+                index: 0,
+                routes: [{ name: 'VendorDashboard' as never }],
+              });
+            }
+          },
         },
       ]
     );
   };
 
   const handleSkip = () => {
-    navigation.navigate('MainTabs');
+    // Navigate back to the main vendor dashboard
+    navigation.reset({
+      index: 0,
+      routes: [{ name: 'MainTabs' as never }],
+    });
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.title}>Invite Service Providers</Text>
-        <Text style={styles.subtitle}>
+      <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+        <Text style={[styles.title, { color: colors.text }]}>Invite Service Providers</Text>
+        <Text style={[styles.subtitle, { color: darkMode ? '#9CA3AF' : '#6C757D' }]}>
           Know other contractors or service providers? Invite them to join FixRx!
         </Text>
       </View>
 
       {/* Stats Card */}
-      <View style={styles.statsCard}>
+      <View style={[styles.statsCard, { backgroundColor: colors.card }]}>
         <View style={styles.statItem}>
-          <MaterialIcons name="people" size={32} color="#0D6EFD" />
-          <Text style={styles.statValue}>{selectedContacts.length}</Text>
-          <Text style={styles.statLabel}>Selected</Text>
+          <MaterialIcons name="people" size={32} color={colors.primary} />
+          <Text style={[styles.statValue, { color: colors.text }]}>{selectedContacts.length}</Text>
+          <Text style={[styles.statLabel, { color: darkMode ? '#9CA3AF' : '#6C757D' }]}>Selected</Text>
         </View>
-        <View style={styles.statDivider} />
+        <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
         <View style={styles.statItem}>
-          <MaterialIcons name="card-giftcard" size={32} color="#28A745" />
-          <Text style={styles.statValue}>$50</Text>
-          <Text style={styles.statLabel}>Referral Bonus</Text>
+          <MaterialIcons name="attach-money" size={32} color="#10B981" />
+          <Text style={[styles.statValue, { color: colors.text }]}>$30</Text>
+          <Text style={[styles.statLabel, { color: darkMode ? '#9CA3AF' : '#6C757D' }]}>Per Referral</Text>
         </View>
       </View>
 
       {/* Info Banner */}
-      <View style={styles.infoBanner}>
-        <MaterialIcons name="info" size={20} color="#0D6EFD" />
-        <Text style={styles.infoText}>
-          Earn $50 for each service provider who joins and completes their first job!
+      <View style={[styles.infoBanner, { backgroundColor: darkMode ? '#1E3A8A' : '#E7F5FF' }]}>
+        <MaterialIcons name="info" size={20} color={colors.primary} />
+        <Text style={[styles.infoText, { color: darkMode ? '#D1D5DB' : '#0D6EFD' }]}>
+          Earn $30 for each service provider who joins and completes their first job!
         </Text>
       </View>
 
       {/* Contacts List */}
       <ScrollView style={styles.contactsList} showsVerticalScrollIndicator={false}>
-        <Text style={styles.sectionTitle}>Select Contacts</Text>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>Select Contacts</Text>
         {contacts.map(contact => {
           const isSelected = selectedContacts.includes(contact.id);
           return (
             <TouchableOpacity
               key={contact.id}
-              style={[styles.contactCard, isSelected && styles.contactCardSelected]}
+              style={[styles.contactCard, { backgroundColor: colors.card, borderColor: colors.border }, isSelected && { borderColor: colors.primary, backgroundColor: darkMode ? '#1E3A8A' : '#F0F7FF' }]}
               onPress={() => toggleContact(contact.id)}
               activeOpacity={0.7}
             >
               <View style={styles.contactLeft}>
-                <View style={[styles.contactAvatar, isSelected && styles.contactAvatarSelected]}>
-                  <Text style={[styles.contactAvatarText, isSelected && styles.contactAvatarTextSelected]}>
+                <View style={[styles.contactAvatar, { backgroundColor: colors.secondary }, isSelected && { backgroundColor: colors.primary }]}>
+                  <Text style={[styles.contactAvatarText, { color: darkMode ? '#9CA3AF' : '#6C757D' }, isSelected && { color: '#FFFFFF' }]}>
                     {contact.name.charAt(0)}
                   </Text>
                 </View>
                 <View style={styles.contactInfo}>
-                  <Text style={styles.contactName}>{contact.name}</Text>
-                  <Text style={styles.contactPhone}>{contact.phone}</Text>
+                  <Text style={[styles.contactName, { color: colors.text }]}>{contact.name}</Text>
+                  <Text style={[styles.contactPhone, { color: darkMode ? '#9CA3AF' : '#6C757D' }]}>{contact.phone}</Text>
                 </View>
               </View>
-              <View style={[styles.checkbox, isSelected && styles.checkboxSelected]}>
+              <View style={[styles.checkbox, { borderColor: darkMode ? '#6B7280' : '#ADB5BD' }, isSelected && { backgroundColor: colors.primary, borderColor: colors.primary }]}>
                 {isSelected && <MaterialIcons name="check" size={18} color="#FFFFFF" />}
               </View>
             </TouchableOpacity>
@@ -133,11 +169,10 @@ const VendorInvitationScreen: React.FC = () => {
       </ScrollView>
 
       {/* Action Buttons */}
-      <View style={styles.footer}>
+      <View style={[styles.footer, { backgroundColor: colors.card, borderTopColor: colors.border }]}>
         <TouchableOpacity
-          style={[styles.button, styles.buttonPrimary]}
+          style={[styles.button, { backgroundColor: colors.primary }]}
           onPress={handleSendInvites}
-          disabled={selectedContacts.length === 0}
           activeOpacity={0.8}
         >
           <MaterialIcons name="send" size={20} color="#FFFFFF" />
@@ -151,7 +186,7 @@ const VendorInvitationScreen: React.FC = () => {
           onPress={handleSkip}
           activeOpacity={0.8}
         >
-          <Text style={styles.buttonSecondaryText}>Skip for Now</Text>
+          <Text style={[styles.buttonSecondaryText, { color: darkMode ? '#9CA3AF' : '#6C757D' }]}>Skip for Now</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

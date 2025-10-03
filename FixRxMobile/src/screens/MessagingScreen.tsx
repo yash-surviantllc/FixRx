@@ -11,10 +11,13 @@ import {
   SafeAreaView,
   Image,
   Alert,
+  Modal,
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { RootStackParamList } from '../types/navigation';
+import { useTheme } from '../context/ThemeContext';
+import { useAppContext } from '../context/AppContext';
 
 type MessagingScreenRouteProp = RouteProp<RootStackParamList, 'Messaging'>;
 
@@ -48,20 +51,111 @@ interface ServiceDetails {
 const MessagingScreen: React.FC = () => {
   const navigation = useNavigation();
   const route = useRoute<MessagingScreenRouteProp>();
+  const { theme, colors } = useTheme();
+  const darkMode = theme === 'dark';
   const { conversationId, customerName, serviceDetails } = route.params || {};
+  const { addMessageToConversation } = useAppContext();
   
+  // Generate conversation content based on service request data
+  const getConversationContent = () => {
+    const conversations = {
+      'req_1': {
+        service: 'Kitchen Sink Repair',
+        initialMessage: 'Hi! I need help with my kitchen sink. It\'s been leaking for a few days and water is backing up.',
+        image: 'https://images.unsplash.com/photo-1585704032915-c3400ca199e7?w=400',
+        imageCaption: 'Here\'s the leak under the sink',
+        quote: { amount: 175, description: 'Kitchen sink repair and pipe replacement' },
+      },
+      'req_2': {
+        service: 'Electrical Work',
+        initialMessage: 'Hello! Multiple outlets in my home office stopped working. I need urgent repair.',
+        image: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=400',
+        imageCaption: 'These outlets are not working',
+        quote: { amount: 125, description: 'Electrical outlet repair and wiring inspection' },
+      },
+      'req_3': {
+        service: 'Plumbing Repair',
+        initialMessage: 'Emergency! My bathroom pipe burst and water damage is spreading rapidly. Please help ASAP!',
+        image: 'https://images.unsplash.com/photo-1607472586893-edb57bdc0e39?w=400',
+        imageCaption: 'Water damage from burst pipe',
+        quote: { amount: 350, description: 'Emergency plumbing repair and water damage assessment' },
+      },
+      'req_4': {
+        service: 'HVAC Service',
+        initialMessage: 'My heating system is making loud noises and not warming the house properly.',
+        image: 'https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=400',
+        imageCaption: 'HVAC unit making strange noises',
+        quote: { amount: 200, description: 'HVAC system diagnosis and repair' },
+      },
+      'req_5': {
+        service: 'Appliance Repair',
+        initialMessage: 'My dishwasher is leaking and not draining properly. Kitchen floor is getting wet.',
+        image: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400',
+        imageCaption: 'Dishwasher leaking water',
+        quote: { amount: 150, description: 'Dishwasher repair and drainage fix' },
+      },
+      'req_6': {
+        service: 'General Maintenance',
+        initialMessage: 'I have several small repairs needed around the house. Flexible on timing.',
+        image: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=400',
+        imageCaption: 'Various maintenance items',
+        quote: { amount: 100, description: 'General home maintenance and repairs' },
+      },
+      'conv_4': {
+        service: 'HVAC Service',
+        initialMessage: 'Thanks for fixing my HVAC system! It\'s working perfectly now.',
+        image: 'https://images.unsplash.com/photo-1581094794329-c8112a89af12?w=400',
+        imageCaption: 'HVAC system running smoothly',
+        quote: { amount: 200, description: 'HVAC system repair completed' },
+      },
+      'conv_5': {
+        service: 'Appliance Repair',
+        initialMessage: 'Can you come tomorrow at 2 PM for the dishwasher repair?',
+        image: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400',
+        imageCaption: 'Dishwasher needs repair',
+        quote: { amount: 150, description: 'Dishwasher repair and maintenance' },
+      },
+      'conv_6': {
+        service: 'General Maintenance',
+        initialMessage: 'I\'ve sent you the quote details. Let me know if you have any questions.',
+        image: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=400',
+        imageCaption: 'General maintenance quote',
+        quote: { amount: 100, description: 'General home maintenance package' },
+      },
+      'conv_7': {
+        service: 'AC Maintenance',
+        initialMessage: 'Great work on the AC maintenance! Cooling much better now.',
+        image: 'https://images.unsplash.com/photo-1631545806609-4c036b0d2e0e?w=400',
+        imageCaption: 'AC working perfectly',
+        quote: { amount: 89, description: 'AC maintenance completed' },
+      },
+      'conv_8': {
+        service: 'Emergency Plumbing',
+        initialMessage: 'Do you provide emergency plumbing services? I have a water leak.',
+        image: 'https://images.unsplash.com/photo-1607472586893-edb57bdc0e39?w=400',
+        imageCaption: 'Emergency water leak',
+        quote: { amount: 250, description: 'Emergency plumbing repair' },
+      },
+    };
+
+    return conversations[conversationId as keyof typeof conversations] || conversations['req_1'];
+  };
+
+  const conversationContent = getConversationContent();
+  const [stage, setStage] = useState<'quoted' | 'scheduled' | 'completed' | undefined>(
+    (serviceDetails?.status?.toLowerCase() as any) || undefined
+  );
+  const status = stage || serviceDetails?.status?.toLowerCase();
+  const statusStep = (status as 'quoted' | 'scheduled' | 'completed') || undefined;
+
   // Determine message flow based on service status
   const getMessagesForStatus = () => {
-    const status = serviceDetails?.status?.toLowerCase();
-    
     // For new/pending requests - only show customer's initial message
     if (status === 'pending' || !status) {
-      return [
+      const pendingMsgs: Message[] = [
         {
           id: '1',
-          text: serviceDetails?.service === 'HVAC Service' 
-            ? 'Hi! My AC stopped working. Can you help?' 
-            : 'Hi! I need help with my kitchen sink. It\'s been leaking for a few days.',
+          text: conversationContent.initialMessage,
           sender: 'other' as const,
           timestamp: new Date(Date.now() - 3600000),
           status: 'read' as const,
@@ -73,23 +167,18 @@ const MessagingScreen: React.FC = () => {
           timestamp: new Date(Date.now() - 3500000),
           status: 'read' as const,
           type: 'image' as const,
-          image: serviceDetails?.service === 'HVAC Service'
-            ? 'https://images.unsplash.com/photo-1631545806609-4c036b0d2e0e?w=400'
-            : 'https://images.unsplash.com/photo-1585704032915-c3400ca199e7?w=400',
-          text: serviceDetails?.service === 'HVAC Service' 
-            ? 'AC unit not cooling at all' 
-            : 'Here\'s the leak under the sink',
+          image: conversationContent.image,
+          text: conversationContent.imageCaption,
         },
       ];
+      return pendingMsgs;
     }
 
     // For quoted/scheduled/completed - show full conversation
-    const baseMessages = [
+    const baseMessages: Message[] = [
       {
         id: '1',
-        text: serviceDetails?.service === 'HVAC Service' 
-          ? 'Hi! My AC stopped working. Can you help?' 
-          : 'Hi! I need help with my kitchen sink. It\'s been leaking for a few days.',
+        text: conversationContent.initialMessage,
         sender: 'other' as const,
         timestamp: new Date(Date.now() - 7200000),
         status: 'read' as const,
@@ -109,12 +198,8 @@ const MessagingScreen: React.FC = () => {
         timestamp: new Date(Date.now() - 6600000),
         status: 'read' as const,
         type: 'image' as const,
-        image: serviceDetails?.service === 'HVAC Service'
-          ? 'https://images.unsplash.com/photo-1631545806609-4c036b0d2e0e?w=400'
-          : 'https://images.unsplash.com/photo-1585704032915-c3400ca199e7?w=400',
-        text: serviceDetails?.service === 'HVAC Service' 
-          ? 'AC unit not cooling at all' 
-          : 'Here\'s the leak under the sink',
+        image: conversationContent.image,
+        text: conversationContent.imageCaption,
       },
       {
         id: '4',
@@ -130,38 +215,7 @@ const MessagingScreen: React.FC = () => {
         timestamp: new Date(Date.now() - 6000000),
         status: 'read' as const,
         type: 'quote' as const,
-        quote: {
-          amount: serviceDetails?.amount || 285,
-          description: serviceDetails?.service || 'Kitchen sink leak repair + pipe replacement',
-        },
-      },
-      {
-        id: '6',
-        text: 'Perfect! When can you come?',
-        sender: 'other' as const,
-        timestamp: new Date(Date.now() - 5400000),
-        status: 'read' as const,
-        type: 'text' as const,
-      },
-      {
-        id: '7',
-        sender: 'me' as const,
-        timestamp: new Date(Date.now() - 4800000),
-        status: 'read' as const,
-        type: 'appointment' as const,
-        appointment: {
-          date: serviceDetails?.date || 'Tomorrow, Sep 16',
-          time: serviceDetails?.time || '2:00 PM - 4:00 PM',
-          service: serviceDetails?.service || 'Kitchen Sink Repair',
-        },
-      },
-      {
-        id: '8',
-        text: 'Great! See you then',
-        sender: 'other' as const,
-        timestamp: new Date(Date.now() - 4200000),
-        status: 'read' as const,
-        type: 'text' as const,
+        quote: conversationContent.quote,
       },
     ];
 
@@ -185,7 +239,7 @@ const MessagingScreen: React.FC = () => {
           appointment: {
             date: serviceDetails?.date || 'Tomorrow, Sep 16',
             time: serviceDetails?.time || '2:00 PM - 4:00 PM',
-            service: serviceDetails?.service || 'Kitchen Sink Repair',
+            service: conversationContent.service,
           },
         },
         {
@@ -203,7 +257,7 @@ const MessagingScreen: React.FC = () => {
     if (status === 'completed') {
       baseMessages.push(
         {
-          id: '9',
+          id: '12',
           sender: 'me' as const,
           timestamp: new Date(Date.now() - 1800000),
           status: 'read' as const,
@@ -214,7 +268,7 @@ const MessagingScreen: React.FC = () => {
           text: 'All done! Work completed successfully',
         },
         {
-          id: '10',
+          id: '13',
           sender: 'me' as const,
           timestamp: new Date(Date.now() - 1200000),
           status: 'read' as const,
@@ -230,14 +284,33 @@ const MessagingScreen: React.FC = () => {
     return baseMessages;
   };
 
-  const initialMessages = useMemo(() => getMessagesForStatus(), [serviceDetails?.status, serviceDetails?.service]);
+  // Ensure no duplicate IDs make it into the list
+  const dedupeById = useCallback((arr: Message[]) => {
+    const map = new Map<string, Message>();
+    for (const m of arr) {
+      // Later entries overwrite earlier ones with same id
+      map.set(String(m.id), m);
+    }
+    return Array.from(map.values());
+  }, []);
+
+  const initialMessages = useMemo(() => dedupeById(getMessagesForStatus()), [dedupeById, status, serviceDetails?.service]);
   const [messages, setMessages] = useState<Message[]>(initialMessages);
+
+  // Keep messages in sync when status or service details change
+  useEffect(() => {
+    setMessages(initialMessages);
+  }, [initialMessages]);
   
   const [inputText, setInputText] = useState('');
+  const [quoteModalVisible, setQuoteModalVisible] = useState(false);
   const flatListRef = useRef<FlatList>(null);
   
   const userName = useMemo(() => customerName || 'John Smith', [customerName]);
-  const userImage = useMemo(() => 'https://randomuser.me/api/portraits/men/1.jpg', []);
+  // Use a safe placeholder for avatar to avoid missing property issues
+  const userImage = useMemo(() => (
+    'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face'
+  ), []);
   
   useEffect(() => {
     // Scroll to bottom when messages change
@@ -262,6 +335,15 @@ const MessagingScreen: React.FC = () => {
     
     setMessages(prev => [...prev, newMessage]);
     setInputText('');
+
+    // Update centralized conversation preview (last message/time)
+    if (conversationId) {
+      try {
+        addMessageToConversation(String(conversationId), newMessage.text || '');
+      } catch (e) {
+        // no-op: keep UI responsive even if context update fails
+      }
+    }
     
     // Simulate message delivery
     setTimeout(() => {
@@ -289,17 +371,17 @@ const MessagingScreen: React.FC = () => {
     if (item.type === 'quote' && item.quote) {
       return (
         <View style={[styles.messageContainer, isMe ? styles.myMessageContainer : styles.otherMessageContainer]}>
-          <View style={styles.quoteCard}>
+          <View style={[styles.quoteCard, { backgroundColor: isMe ? colors.primary : (darkMode ? '#1F2937' : '#F3F4F6'), borderColor: isMe ? colors.primary : colors.border }]}>
             <View style={styles.quoteHeader}>
-              <MaterialIcons name="description" size={20} color="#0D6EFD" />
-              <Text style={styles.quoteTitle}>Quote</Text>
+              <MaterialIcons name="description" size={20} color={isMe ? '#FFFFFF' : colors.primary} />
+              <Text style={[styles.quoteTitle, { color: isMe ? '#FFFFFF' : colors.text }]}>Quote</Text>
             </View>
-            <Text style={styles.quoteAmount}>${item.quote.amount}</Text>
-            <Text style={styles.quoteDescription}>{item.quote.description}</Text>
-            <TouchableOpacity style={styles.viewQuoteButton} activeOpacity={0.7}>
-              <Text style={styles.viewQuoteText}>View Quote</Text>
+            <Text style={[styles.quoteAmount, { color: isMe ? '#FFFFFF' : colors.text }]}>${item.quote.amount}</Text>
+            <Text style={[styles.quoteDescription, { color: isMe ? 'rgba(255, 255, 255, 0.9)' : (darkMode ? '#D1D5DB' : '#6B7280') }]}>{item.quote.description}</Text>
+            <TouchableOpacity style={[styles.viewQuoteButton, { backgroundColor: isMe ? 'rgba(255, 255, 255, 0.2)' : colors.primary }]} activeOpacity={0.7}>
+              <Text style={[styles.viewQuoteText, { color: '#FFFFFF' }]}>View Quote</Text>
             </TouchableOpacity>
-            <Text style={styles.messageTime}>{formatTime(item.timestamp)}</Text>
+            <Text style={[styles.messageTime, { color: isMe ? 'rgba(255, 255, 255, 0.8)' : (darkMode ? '#9CA3AF' : '#6B7280') }]}>{formatTime(item.timestamp)}</Text>
           </View>
         </View>
       );
@@ -309,15 +391,15 @@ const MessagingScreen: React.FC = () => {
     if (item.type === 'appointment' && item.appointment) {
       return (
         <View style={[styles.messageContainer, isMe ? styles.myMessageContainer : styles.otherMessageContainer]}>
-          <View style={styles.appointmentCard}>
+          <View style={[styles.appointmentCard, { backgroundColor: isMe ? colors.primary : (darkMode ? '#1F2937' : '#F3F4F6'), borderColor: isMe ? colors.primary : colors.border }]}>
             <View style={styles.appointmentHeader}>
-              <MaterialIcons name="event" size={20} color="#0D6EFD" />
-              <Text style={styles.appointmentTitle}>Appointment</Text>
+              <MaterialIcons name="event" size={20} color={isMe ? '#FFFFFF' : colors.primary} />
+              <Text style={[styles.appointmentTitle, { color: isMe ? '#FFFFFF' : colors.text }]}>Appointment</Text>
             </View>
-            <Text style={styles.appointmentDate}>{item.appointment.date}</Text>
-            <Text style={styles.appointmentTime}>{item.appointment.time}</Text>
-            <Text style={styles.appointmentService}>{item.appointment.service}</Text>
-            <Text style={styles.messageTime}>{formatTime(item.timestamp)}</Text>
+            <Text style={[styles.appointmentDate, { color: isMe ? '#FFFFFF' : colors.text }]}>{item.appointment.date}</Text>
+            <Text style={[styles.appointmentTime, { color: isMe ? 'rgba(255, 255, 255, 0.9)' : (darkMode ? '#D1D5DB' : '#6B7280') }]}>{item.appointment.time}</Text>
+            <Text style={[styles.appointmentService, { color: isMe ? 'rgba(255, 255, 255, 0.9)' : (darkMode ? '#D1D5DB' : '#6B7280') }]}>{item.appointment.service}</Text>
+            <Text style={[styles.messageTime, { color: isMe ? 'rgba(255, 255, 255, 0.8)' : (darkMode ? '#9CA3AF' : '#6B7280') }]}>{formatTime(item.timestamp)}</Text>
           </View>
         </View>
       );
@@ -327,10 +409,10 @@ const MessagingScreen: React.FC = () => {
     if (item.type === 'image' && item.image) {
       return (
         <View style={[styles.messageContainer, isMe ? styles.myMessageContainer : styles.otherMessageContainer]}>
-          <View style={styles.imageMessageContainer}>
+          <View style={[styles.imageMessageContainer, { backgroundColor: isMe ? colors.primary : (darkMode ? '#1F2937' : '#F3F4F6') }]}>
             <Image source={{ uri: item.image }} style={styles.messageImage} />
-            {item.text && <Text style={styles.imageCaption}>{item.text}</Text>}
-            <Text style={styles.messageTime}>{formatTime(item.timestamp)}</Text>
+            {item.text && <Text style={[styles.imageCaption, { color: isMe ? '#FFFFFF' : colors.text }]}>{item.text}</Text>}
+            <Text style={[styles.messageTime, { color: isMe ? 'rgba(255, 255, 255, 0.8)' : (darkMode ? '#9CA3AF' : '#6B7280') }]}>{formatTime(item.timestamp)}</Text>
           </View>
         </View>
       );
@@ -347,13 +429,13 @@ const MessagingScreen: React.FC = () => {
         <View
           style={[
             styles.messageBubble,
-            isMe ? styles.myMessageBubble : styles.otherMessageBubble,
+            isMe ? { backgroundColor: colors.primary } : { backgroundColor: darkMode ? '#1F2937' : '#F3F4F6' },
           ]}
         >
           <Text
             style={[
               styles.messageText,
-              isMe ? styles.myMessageText : styles.otherMessageText,
+              { color: isMe ? '#FFFFFF' : colors.text },
             ]}
           >
             {item.text}
@@ -362,7 +444,7 @@ const MessagingScreen: React.FC = () => {
             <Text
               style={[
                 styles.messageTime,
-                isMe ? styles.myMessageTime : styles.otherMessageTime,
+                { color: isMe ? 'rgba(255, 255, 255, 0.8)' : (darkMode ? '#9CA3AF' : '#6B7280') },
               ]}
             >
               {formatTime(item.timestamp)}
@@ -377,164 +459,107 @@ const MessagingScreen: React.FC = () => {
                     : 'done'
                 }
                 size={14}
-                color={item.status === 'read' ? '#0D6EFD' : '#9CA3AF'}
+                color="rgba(255, 255, 255, 0.8)"
                 style={styles.statusIcon}
               />
             )}
-          </View>
+      </View>
         </View>
       </View>
     );
-  }, [formatTime]);
-
-  const keyExtractor = useCallback((item: Message) => item.id, []);
-  
-  // Determine current status step
-  const getStatusStep = () => {
-    const status = serviceDetails?.status?.toLowerCase();
-    if (status === 'pending' || !status) return 0; // No progress bar for pending
-    if (status === 'completed') return 3;
-    if (status === 'scheduled' || status === 'confirmed') return 2;
-    return 1; // quoted
-  };
-
-  const statusStep = getStatusStep();
-  const showStatusBar = statusStep > 0; // Only show if not pending
+  }, [formatTime, colors, darkMode]);
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Header */}
+    <SafeAreaView style={[styles.container, { backgroundColor: darkMode ? '#111827' : '#F8F9FA' }]}>
       <View style={styles.header}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           style={styles.backButton}
           activeOpacity={0.7}
         >
-          <MaterialIcons name="arrow-back" size={24} color="#212529" />
+          <MaterialIcons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        
         <View style={styles.headerCenter}>
           <Image source={{ uri: userImage }} style={styles.headerAvatar} />
           <View style={styles.headerInfo}>
-            <Text style={styles.headerName}>{userName}</Text>
-            <Text style={styles.headerStatus}>
-              {serviceDetails?.service || 'Service'}
+            <Text style={[styles.headerName, { color: colors.text }]}>{userName}</Text>
+            <Text style={[styles.headerStatus, { color: darkMode ? '#9CA3AF' : '#6C757D' }]}>
+              {conversationContent.service}
             </Text>
           </View>
         </View>
-        
-        <TouchableOpacity
-          style={styles.headerAction}
-          onPress={() => Alert.alert('Call', `Call ${userName}`)}
-          activeOpacity={0.7}
-        >
-          <MaterialIcons name="call" size={24} color="#0D6EFD" />
-        </TouchableOpacity>
       </View>
 
-      {/* Status Progress Bar - only show if not pending */}
-      {serviceDetails && showStatusBar && (
-        <View style={styles.statusBar}>
-          <View style={styles.statusStep}>
-            <View style={[styles.statusCircle, statusStep >= 1 && styles.statusCircleActive]}>
-              <MaterialIcons name="check" size={16} color="#FFFFFF" />
-            </View>
-            <Text style={[styles.statusLabel, statusStep >= 1 && styles.statusLabelActive]}>
-              Quoted
-            </Text>
-          </View>
-          <View style={[styles.statusLine, statusStep >= 2 && styles.statusLineActive]} />
-          <View style={styles.statusStep}>
-            <View style={[styles.statusCircle, statusStep >= 2 && styles.statusCircleActive]}>
-              {statusStep >= 2 && <MaterialIcons name="check" size={16} color="#FFFFFF" />}
-            </View>
-            <Text style={[styles.statusLabel, statusStep >= 2 && styles.statusLabelActive]}>
-              Scheduled
-            </Text>
-          </View>
-          <View style={[styles.statusLine, statusStep >= 3 && styles.statusLineActive]} />
-          <View style={styles.statusStep}>
-            <View style={[styles.statusCircle, statusStep >= 3 && styles.statusCircleActive]}>
-              {statusStep >= 3 && <MaterialIcons name="check" size={16} color="#FFFFFF" />}
-            </View>
-            <Text style={[styles.statusLabel, statusStep >= 3 && styles.statusLabelActive]}>
-              Completed
-            </Text>
-          </View>
-        </View>
-      )}
-      
-      {/* Service Details Banner (if provided) */}
-      {serviceDetails && (
-        <View style={styles.serviceDetailsBanner}>
-          <MaterialIcons name="info-outline" size={20} color="#0D6EFD" />
-          <View style={styles.serviceDetailsContent}>
-            <Text style={styles.serviceDetailsTitle}>
-              {serviceDetails.service}
-            </Text>
-            <Text style={styles.serviceDetailsText}>
-              {serviceDetails.date} • {serviceDetails.time} • {serviceDetails.status}
-              {serviceDetails.amount && ` • $${serviceDetails.amount}`}
-            </Text>
-          </View>
-        </View>
-      )}
-      
       {/* Messages List */}
       <FlatList
         ref={flatListRef}
         data={messages}
         renderItem={renderMessage}
-        keyExtractor={keyExtractor}
-        contentContainerStyle={styles.messagesList}
         showsVerticalScrollIndicator={false}
-        removeClippedSubviews={true}
-        maxToRenderPerBatch={10}
-        updateCellsBatchingPeriod={50}
-        windowSize={10}
+        keyExtractor={(item, index) => {
+          const t = item.timestamp instanceof Date ? item.timestamp.getTime() : index;
+          return `${String(item.id)}_${t}_${index}`;
+        }}
+        contentContainerStyle={styles.messagesList}
       />
-      
-      {/* Input Area */}
+
+      {/* Input Container */}
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
         <View style={styles.inputContainer}>
-          <TouchableOpacity
-            style={styles.attachButton}
-            onPress={() => Alert.alert('Attach', 'Attach files')}
-            activeOpacity={0.7}
-          >
+          <TouchableOpacity style={styles.attachButton} activeOpacity={0.7}>
             <MaterialIcons name="attach-file" size={24} color="#6C757D" />
           </TouchableOpacity>
-          
           <TextInput
-            style={styles.input}
-            placeholder="Type a message..."
-            placeholderTextColor="#9CA3AF"
+            style={[styles.input, { color: darkMode ? '#F3F4F6' : '#212529' }]}
             value={inputText}
             onChangeText={setInputText}
+            placeholder="Type a message..."
+            placeholderTextColor={darkMode ? '#6B7280' : '#ADB5BD'}
             multiline
-            maxLength={1000}
           />
-          
           <TouchableOpacity
-            style={[
-              styles.sendButton,
-              inputText.trim().length === 0 && styles.sendButtonDisabled,
-            ]}
+            style={[styles.sendButton, !inputText.trim() && styles.sendButtonDisabled]}
             onPress={handleSend}
-            disabled={inputText.trim().length === 0}
+            disabled={!inputText.trim()}
             activeOpacity={0.7}
           >
-            <MaterialIcons
-              name="send"
-              size={20}
-              color={inputText.trim().length > 0 ? '#FFFFFF' : '#9CA3AF'}
-            />
+            <MaterialIcons name="send" size={20} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
+
+      {/* Quote Modal */}
+      <Modal
+        visible={quoteModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setQuoteModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: colors.text }]}>Quote</Text>
+              <TouchableOpacity onPress={() => setQuoteModalVisible(false)}>
+                <MaterialIcons name="close" size={22} color={colors.text} />
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.modalAmount}>${conversationContent.quote.amount}</Text>
+            <Text style={[styles.modalDescription, { color: darkMode ? '#D1D5DB' : '#6B7280' }]}>
+              {conversationContent.quote.description}
+            </Text>
+            <TouchableOpacity
+              style={[styles.modalPrimary, { backgroundColor: colors.primary }]}
+              onPress={() => setQuoteModalVisible(false)}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.modalPrimaryText}>Mark as Accepted</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -584,6 +609,31 @@ const styles = StyleSheet.create({
   },
   headerAction: {
     padding: 4,
+  },
+  tabsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 8,
+    marginBottom: 8,
+  },
+  tab: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    backgroundColor: '#F1F3F5',
+  },
+  tabActive: {
+    backgroundColor: '#0D6EFD',
+  },
+  tabText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#495057',
+    textTransform: 'capitalize',
+  },
+  tabTextActive: {
+    color: '#FFFFFF',
   },
   statusBar: {
     flexDirection: 'row',
@@ -803,6 +853,48 @@ const styles = StyleSheet.create({
     maxWidth: '85%',
     borderWidth: 1,
     borderColor: '#E5E7EB',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  modalCard: {
+    width: '100%',
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 1,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  modalTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  modalAmount: {
+    fontSize: 32,
+    fontWeight: '800',
+    color: '#111827',
+    marginVertical: 6,
+  },
+  modalDescription: {
+    fontSize: 14,
+    marginBottom: 16,
+  },
+  modalPrimary: {
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  modalPrimaryText: {
+    color: '#FFFFFF',
+    fontWeight: '700',
   },
   appointmentHeader: {
     flexDirection: 'row',

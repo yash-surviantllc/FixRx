@@ -3,12 +3,15 @@ import { View, Text, StyleSheet, TextInput, TouchableOpacity, SafeAreaView } fro
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useTheme } from '../context/ThemeContext';
 import { RootStackParamList } from '../types/navigation';
 
 type EmailLoginScreenNavigationProp = StackNavigationProp<RootStackParamList, 'EmailLogin'>;
 
 const EmailLoginScreen: React.FC = () => {
   const navigation = useNavigation<EmailLoginScreenNavigationProp>();
+  const { theme, colors } = useTheme();
+  const darkMode = theme === 'dark';
   const [email, setEmail] = useState('');
   const [isValid, setIsValid] = useState(false);
 
@@ -25,7 +28,7 @@ const EmailLoginScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <TouchableOpacity 
         style={styles.backButton}
         onPress={() => navigation.goBack()}

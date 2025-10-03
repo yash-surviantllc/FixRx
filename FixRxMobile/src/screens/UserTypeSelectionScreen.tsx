@@ -5,6 +5,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { MaterialIcons } from '@expo/vector-icons';
 import { RootStackParamList } from '../types/navigation';
 import { useAppContext } from '../context/AppContext';
+import { useTheme } from '../context/ThemeContext';
 
 type UserTypeSelectionScreenNavigationProp = StackNavigationProp<RootStackParamList, 'UserTypeSelection'>;
 
@@ -13,13 +14,18 @@ const UserTypeSelectionScreen: React.FC = () => {
   const route = useRoute();
   const { email } = route.params as { email: string };
   const { setUserType } = useAppContext();
+  const { theme, colors } = useTheme();
+  const darkMode = theme === 'dark';
   const [selectedType, setSelectedType] = useState<'customer' | 'vendor' | null>(null);
 
   const handleContinue = useCallback(() => {
     if (!selectedType) return;
     
+    console.log('Continue pressed with selectedType:', selectedType, 'email:', email);
+    
     if (selectedType === 'vendor') {
       setUserType('vendor');
+      console.log('Navigating to VendorProfileSetup with email:', email);
       navigation.navigate('VendorProfileSetup', { email });
     } else {
       setUserType('consumer');
@@ -28,22 +34,23 @@ const UserTypeSelectionScreen: React.FC = () => {
   }, [selectedType, setUserType, navigation, email]);
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.progressDots}>
-        <View style={[styles.dot, styles.dotActive]} />
-        <View style={[styles.dot, styles.dotActive]} />
-        <View style={[styles.dot, styles.dotActive]} />
-        <View style={styles.dot} />
+        <View style={[styles.dot, styles.dotActive, { backgroundColor: colors.primary }]} />
+        <View style={[styles.dot, styles.dotActive, { backgroundColor: colors.primary }]} />
+        <View style={[styles.dot, styles.dotActive, { backgroundColor: colors.primary }]} />
+        <View style={[styles.dot, { backgroundColor: darkMode ? '#374151' : '#D1D5DB' }]} />
       </View>
 
       <View style={styles.content}>
-        <Text style={styles.title}>How will you use FixRx?</Text>
-        <Text style={styles.subtitle}>Choose the option that best describes you</Text>
+        <Text style={[styles.title, { color: colors.text }]}>How will you use FixRx?</Text>
+        <Text style={[styles.subtitle, { color: darkMode ? '#9CA3AF' : '#6B7280' }]}>Choose the option that best describes you</Text>
 
         <View style={styles.optionsContainer}>
           <TouchableOpacity 
             style={[
               styles.optionCard,
+              { backgroundColor: colors.card, borderColor: colors.border },
               selectedType === 'customer' && styles.optionCardSelected
             ]}
             onPress={() => setSelectedType('customer')}
@@ -61,11 +68,12 @@ const UserTypeSelectionScreen: React.FC = () => {
             </View>
             <Text style={[
               styles.optionTitle,
+              { color: colors.text },
               selectedType === 'customer' && { color: '#0D6EFD' }
             ]}>
               I need services
             </Text>
-            <Text style={styles.optionDescription}>
+            <Text style={[styles.optionDescription, { color: darkMode ? '#9CA3AF' : '#6B7280' }]}>
               Find trusted contractors through friends
             </Text>
             {selectedType === 'customer' && (
@@ -78,6 +86,7 @@ const UserTypeSelectionScreen: React.FC = () => {
           <TouchableOpacity 
             style={[
               styles.optionCard,
+              { backgroundColor: colors.card, borderColor: colors.border },
               selectedType === 'vendor' && styles.optionCardSelectedVendor
             ]}
             onPress={() => setSelectedType('vendor')}
@@ -95,11 +104,12 @@ const UserTypeSelectionScreen: React.FC = () => {
             </View>
             <Text style={[
               styles.optionTitle,
+              { color: colors.text },
               selectedType === 'vendor' && { color: '#FF6B35' }
             ]}>
               I provide services
             </Text>
-            <Text style={styles.optionDescription}>
+            <Text style={[styles.optionDescription, { color: darkMode ? '#9CA3AF' : '#6B7280' }]}>
               Connect with homeowners who need help
             </Text>
             {selectedType === 'vendor' && (
@@ -112,7 +122,7 @@ const UserTypeSelectionScreen: React.FC = () => {
 
         {selectedType && (
           <TouchableOpacity 
-            style={styles.continueButton}
+            style={[styles.continueButton, { backgroundColor: colors.primary }]}
             onPress={handleContinue}
             activeOpacity={0.8}
           >

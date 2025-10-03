@@ -2,32 +2,35 @@ import React from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useTheme } from '../context/ThemeContext';
 
 const PaymentMethodsScreen: React.FC = () => {
   const navigation = useNavigation();
+  const { theme, colors } = useTheme();
+  const darkMode = theme === 'dark';
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.header, { borderBottomColor: colors.border }]}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <MaterialIcons name="arrow-back" size={24} color="#000" />
+          <MaterialIcons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Payment Methods</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>Payment Methods</Text>
         <View style={{ width: 24 }} />
       </View>
 
       <ScrollView style={styles.content}>
-        <Text style={styles.sectionTitle}>Saved Payment Methods</Text>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>Saved Payment Methods</Text>
         
         <View style={styles.emptyState}>
-          <MaterialIcons name="payment" size={64} color="#9CA3AF" />
-          <Text style={styles.emptyText}>No payment methods added yet</Text>
-          <Text style={styles.emptySubtext}>Add a payment method to get started</Text>
+          <MaterialIcons name="payment" size={64} color={darkMode ? '#6B7280' : '#9CA3AF'} />
+          <Text style={[styles.emptyText, { color: darkMode ? '#9CA3AF' : '#6B7280' }]}>No payment methods added yet</Text>
+          <Text style={[styles.emptySubtext, { color: darkMode ? '#6B7280' : '#9CA3AF' }]}>Add a payment method to get started</Text>
         </View>
 
-        <TouchableOpacity style={styles.addButton}>
-          <MaterialIcons name="add" size={24} color="#2563EB" />
-          <Text style={styles.addButtonText}>Add Payment Method</Text>
+        <TouchableOpacity style={[styles.addButton, { backgroundColor: darkMode ? '#1E3A8A' : '#EFF6FF' }]}>
+          <MaterialIcons name="add" size={24} color={colors.primary} />
+          <Text style={[styles.addButtonText, { color: colors.primary }]}>Add Payment Method</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>

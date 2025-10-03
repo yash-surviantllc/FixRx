@@ -12,106 +12,72 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '../types/navigation';
+import { useAppContext } from '../context/AppContext';
+import { useTheme } from '../context/ThemeContext';
 
 type ChatListScreenNavigationProp = StackNavigationProp<RootStackParamList, 'ChatList'>;
 
-// Mock data for chat conversations
-const MOCK_CONVERSATIONS = [
-  {
-    id: '1',
-    userId: 'user1',
-    userName: 'John Smith',
-    userImage: 'https://randomuser.me/api/portraits/men/1.jpg',
-    lastMessage: 'Hi there! I was wondering about the availability for next week...',
-    time: '2h ago',
-    unreadCount: 2,
-    isOnline: true,
-    lastActive: '2h ago'
-  },
-  {
-    id: '2',
-    userId: 'user2',
-    userName: 'Sarah Johnson',
-    userImage: 'https://randomuser.me/api/portraits/women/2.jpg',
-    lastMessage: 'Thanks for the great service!',
-    time: '1d ago',
-    unreadCount: 0,
-    isOnline: false,
-    lastActive: '5h ago'
-  },
-  {
-    id: '3',
-    userId: 'user3',
-    userName: 'Michael Brown',
-    userImage: 'https://randomuser.me/api/portraits/men/3.jpg',
-    lastMessage: 'Can we reschedule our appointment?',
-    time: '2d ago',
-    unreadCount: 1,
-    isOnline: true,
-    lastActive: '30m ago'
-  },
-  {
-    id: '4',
-    userId: 'user4',
-    userName: 'Emily Davis',
-    userImage: 'https://randomuser.me/api/portraits/women/4.jpg',
-    lastMessage: 'I\'ve sent the payment. Please confirm once received.',
-    time: '3d ago',
-    unreadCount: 0,
-    isOnline: false,
-    lastActive: '1d ago'
-  },
-  {
-    id: '5',
-    userId: 'user5',
-    userName: 'David Wilson',
-    userImage: 'https://randomuser.me/api/portraits/men/5.jpg',
-    lastMessage: 'The work looks great, thank you!',
-    time: '1w ago',
-    unreadCount: 0,
-    isOnline: true,
-    lastActive: '2h ago'
-  },
-];
+// Helper to style the small status chip based on conversation/service status
+const getStatusChipStyle = (
+  status?: string,
+  colors?: { primary: string; border: string }
+) => {
+  const base = { borderColor: '#E5E7EB', backgroundColor: '#F9FAFB' } as const;
+  if (!status) return base;
+  const s = status.toLowerCase();
+  if (s.includes('completed')) return { borderColor: '#10B981', backgroundColor: '#ECFDF5' };
+  if (s.includes('scheduled') || s.includes('confirmed')) return { borderColor: '#3B82F6', backgroundColor: '#EFF6FF' };
+  if (s.includes('quoted')) return { borderColor: '#F59E0B', backgroundColor: '#FFFBEB' };
+  if (s.includes('pending')) return { borderColor: '#D1D5DB', backgroundColor: '#F3F4F6' };
+  return base;
+};
 
 const ChatListScreen: React.FC = () => {
   const navigation = useNavigation<ChatListScreenNavigationProp>();
+  const { theme, colors } = useTheme();
+  const { conversations } = useAppContext();
+  const darkMode = theme === 'dark';
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
-  const [conversations, setConversations] = useState<typeof MOCK_CONVERSATIONS>([]);
+  const [list, setList] = useState(conversations);
 
-  // Simulate loading conversations
+  // Simulate loading conversations from centralized store
   useEffect(() => {
     const timer = setTimeout(() => {
-      setConversations(MOCK_CONVERSATIONS);
+      setList(conversations);
       setIsLoading(false);
     }, 800);
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [conversations]);
 
   // Filter conversations based on search query
-  const filteredConversations = conversations.filter(conversation => 
-    conversation.userName.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredConversations = list.filter(conversation => 
+    (conversation.customerName || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   // Render each conversation item
-  const renderConversation = ({ item }: { item: typeof MOCK_CONVERSATIONS[0] }) => (
+  const renderConversation = ({ item }: { item: typeof list[0] }) => (
     <TouchableOpacity 
-      style={styles.conversationItem}
+      style={[
+        styles.conversationItem,
+        { backgroundColor: colors.card, borderColor: colors.border }
+      ]}
       onPress={() => {
         navigation.navigate('Messaging', { 
-          conversationId: item.id
+          conversationId: item.id,
+          customerName: item.customerName,
+          serviceDetails: item.serviceDetails,
         });
       }}
     >
       <View style={styles.avatarContainer}>
         <Image 
-          source={{ uri: item.userImage }} 
+          source={{ uri: item.avatar }} 
           style={styles.avatar}
           defaultSource={{ uri: 'https://via.placeholder.com/50' }}
         />
-        {item.isOnline && <View style={styles.onlineBadge} />}
+        {/* We can add presence later */}
       </View>
       
       <View style={styles.conversationContent}>
@@ -119,59 +85,63 @@ const ChatListScreen: React.FC = () => {
           <Text 
             style={[
               styles.userName,
-              item.unreadCount > 0 && styles.unreadUserName
+              { color: colors.text },
+              item.unread && styles.unreadUserName
             ]}
             numberOfLines={1}
           >
-            {item.userName}
+            {item.customerName}
           </Text>
-          <Text 
-            style={[
-              styles.time,
-              item.unreadCount > 0 && styles.unreadTime
-            ]}
-          >
-            {item.time}
-          </Text>
+          <View style={styles.headerRight}>
+            {!!item.serviceDetails?.status && (
+              <View style={[styles.statusChip, getStatusChipStyle(item.serviceDetails?.status, colors)]}>
+                <Text style={styles.statusChipText}>
+                  {item.serviceDetails?.status}
+                </Text>
+              </View>
+            )}
+            <Text 
+              style={[
+                styles.time,
+                { color: darkMode ? '#9CA3AF' : '#ADB5BD' },
+                item.unread && { color: colors.primary }
+              ]}
+            >
+              {item.time}
+            </Text>
+          </View>
         </View>
         
         <View style={styles.conversationFooter}>
           <Text 
             style={[
               styles.lastMessage,
-              item.unreadCount > 0 && styles.unreadMessage
+              { color: darkMode ? '#9CA3AF' : '#6C757D' },
+              item.unread && { color: colors.text, fontWeight: '500' }
             ]}
             numberOfLines={1}
           >
             {item.lastMessage}
           </Text>
-          
-          {item.unreadCount > 0 && (
-            <View style={styles.unreadBadge}>
-              <Text style={styles.unreadCount}>
-                {item.unreadCount > 9 ? '9+' : item.unreadCount}
-              </Text>
+          {item.unread && (
+            <View style={[styles.unreadBadge, { backgroundColor: colors.primary }]} >
+              <Text style={styles.unreadCount}>•</Text>
             </View>
           )}
         </View>
-        
-        {!item.isOnline && item.lastActive && (
-          <Text style={styles.lastSeenText}>
-            Last active {item.lastActive}
-          </Text>
-        )}
+        {/* Presence info can be re-added later */}
       </View>
     </TouchableOpacity>
   );
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Search Bar */}
-      <View style={styles.searchContainer}>
+      <View style={[styles.searchContainer, { borderBottomColor: colors.border }]}>
         <TextInput
-          style={styles.searchInput}
+          style={[styles.searchInput, { backgroundColor: colors.secondary, color: colors.text }]}
           placeholder="Search conversations..."
-          placeholderTextColor="#9CA3AF"
+          placeholderTextColor={darkMode ? '#6B7280' : '#9CA3AF'}
           value={searchQuery}
           onChangeText={setSearchQuery}
         />
@@ -179,7 +149,7 @@ const ChatListScreen: React.FC = () => {
       
       {/* New Message Button */}
       <TouchableOpacity 
-        style={styles.newMessageButton}
+        style={[styles.newMessageButton, { backgroundColor: colors.primary }]}
         onPress={() => {
           // Navigate to new message screen
           // navigation.navigate('NewMessage');
@@ -191,8 +161,8 @@ const ChatListScreen: React.FC = () => {
       {/* Conversations List */}
       {isLoading ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#0D6EFD" />
-          <Text style={styles.loadingText}>Loading conversations...</Text>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={[styles.loadingText, { color: darkMode ? '#9CA3AF' : '#6C757D' }]}>Loading conversations...</Text>
         </View>
       ) : filteredConversations.length > 0 ? (
         <FlatList
@@ -204,15 +174,15 @@ const ChatListScreen: React.FC = () => {
         />
       ) : (
         <View style={styles.emptyState}>
-          <Text style={styles.emptyStateTitle}>No conversations found</Text>
-          <Text style={styles.emptyStateText}>
+          <Text style={[styles.emptyStateTitle, { color: colors.text }]}>No conversations found</Text>
+          <Text style={[styles.emptyStateText, { color: darkMode ? '#9CA3AF' : '#6C757D' }]}>
             {searchQuery 
               ? 'No conversations match your search.' 
               : 'Start a new conversation to get started!'
             }
           </Text>
           <TouchableOpacity 
-            style={styles.startChatButton}
+            style={[styles.startChatButton, { backgroundColor: colors.primary }]}
             onPress={() => {
               // Navigate to new message screen
               // navigation.navigate('NewMessage');
@@ -272,13 +242,20 @@ const styles = StyleSheet.create({
     color: '#6C757D',
   },
   listContent: {
-    paddingBottom: 16,
+    padding: 16,
+    paddingBottom: 24,
+    gap: 12,
   },
   conversationItem: {
     flexDirection: 'row',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F1F3F5',
+    padding: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 2,
   },
   avatarContainer: {
     marginRight: 16,
@@ -310,6 +287,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 4,
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   userName: {
     fontSize: 16,
@@ -357,6 +339,17 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 12,
     fontWeight: '600',
+  },
+  statusChip: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 999,
+    borderWidth: 1,
+  },
+  statusChipText: {
+    fontSize: 11,
+    fontWeight: '600',
+    textTransform: 'capitalize',
   },
   lastSeenText: {
     fontSize: 11,

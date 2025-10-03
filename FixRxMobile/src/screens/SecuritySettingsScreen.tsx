@@ -2,66 +2,71 @@ import React from 'react';
 import { View, Text, StyleSheet, SafeAreaView, TouchableOpacity, ScrollView, Switch } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useTheme } from '../context/ThemeContext';
 
 const SecuritySettingsScreen: React.FC = () => {
   const navigation = useNavigation();
+  const { theme, colors } = useTheme();
+  const darkMode = theme === 'dark';
   const [biometricEnabled, setBiometricEnabled] = React.useState(false);
   const [twoFactorEnabled, setTwoFactorEnabled] = React.useState(false);
 
+  const iconColor = darkMode ? '#9CA3AF' : '#6B7280';
+
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.header, { borderBottomColor: colors.border }]}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <MaterialIcons name="arrow-back" size={24} color="#000" />
+          <MaterialIcons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Security</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>Security</Text>
         <View style={{ width: 24 }} />
       </View>
 
       <ScrollView style={styles.content}>
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Authentication</Text>
+        <View style={[styles.section, { borderBottomColor: colors.border }]}>
+          <Text style={[styles.sectionTitle, { color: iconColor }]}>Authentication</Text>
           
           <View style={styles.settingItem}>
             <View style={styles.settingLeft}>
-              <MaterialIcons name="fingerprint" size={24} color="#6B7280" />
+              <MaterialIcons name="fingerprint" size={24} color={iconColor} />
               <View style={styles.settingText}>
-                <Text style={styles.settingTitle}>Biometric Login</Text>
-                <Text style={styles.settingSubtitle}>Use fingerprint or face ID</Text>
+                <Text style={[styles.settingTitle, { color: colors.text }]}>Biometric Login</Text>
+                <Text style={[styles.settingSubtitle, { color: iconColor }]}>Use fingerprint or face ID</Text>
               </View>
             </View>
             <Switch
               value={biometricEnabled}
               onValueChange={setBiometricEnabled}
-              trackColor={{ false: '#D1D5DB', true: '#93C5FD' }}
-              thumbColor={biometricEnabled ? '#2563EB' : '#F3F4F6'}
+              trackColor={{ false: darkMode ? '#374151' : '#D1D5DB', true: '#93C5FD' }}
+              thumbColor={biometricEnabled ? '#2563EB' : darkMode ? '#4B5563' : '#F3F4F6'}
             />
           </View>
 
           <View style={styles.settingItem}>
             <View style={styles.settingLeft}>
-              <MaterialIcons name="security" size={24} color="#6B7280" />
+              <MaterialIcons name="security" size={24} color={iconColor} />
               <View style={styles.settingText}>
-                <Text style={styles.settingTitle}>Two-Factor Authentication</Text>
-                <Text style={styles.settingSubtitle}>Extra security for your account</Text>
+                <Text style={[styles.settingTitle, { color: colors.text }]}>Two-Factor Authentication</Text>
+                <Text style={[styles.settingSubtitle, { color: iconColor }]}>Extra security for your account</Text>
               </View>
             </View>
             <Switch
               value={twoFactorEnabled}
               onValueChange={setTwoFactorEnabled}
-              trackColor={{ false: '#D1D5DB', true: '#93C5FD' }}
-              thumbColor={twoFactorEnabled ? '#2563EB' : '#F3F4F6'}
+              trackColor={{ false: darkMode ? '#374151' : '#D1D5DB', true: '#93C5FD' }}
+              thumbColor={twoFactorEnabled ? '#2563EB' : darkMode ? '#4B5563' : '#F3F4F6'}
             />
           </View>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Password</Text>
+        <View style={[styles.section, { borderBottomColor: colors.border }]}>
+          <Text style={[styles.sectionTitle, { color: iconColor }]}>Password</Text>
           
           <TouchableOpacity style={styles.actionItem}>
-            <MaterialIcons name="lock" size={24} color="#6B7280" />
-            <Text style={styles.actionText}>Change Password</Text>
-            <MaterialIcons name="chevron-right" size={24} color="#9CA3AF" />
+            <MaterialIcons name="lock" size={24} color={iconColor} />
+            <Text style={[styles.actionText, { color: colors.text }]}>Change Password</Text>
+            <MaterialIcons name="chevron-right" size={24} color={darkMode ? '#6B7280' : '#9CA3AF'} />
           </TouchableOpacity>
         </View>
       </ScrollView>
