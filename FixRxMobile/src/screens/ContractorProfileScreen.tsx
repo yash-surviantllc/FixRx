@@ -129,9 +129,7 @@ const ContractorProfileScreen: React.FC = () => {
   const handleStartConversation = () => {
     navigation.navigate('Messaging' as any, { 
       conversationId: contractor.id,
-      userName: contractor.name,
-      userImage: contractor.avatar || 'https://via.placeholder.com/50',
-      isOnline: true,
+      contractorName: contractor.name 
     });
   };
 

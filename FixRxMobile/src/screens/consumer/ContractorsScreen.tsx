@@ -8,8 +8,7 @@ import {
   Image, 
   SafeAreaView,
   StatusBar,
-  FlatList,
-  Modal
+  FlatList
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -26,8 +25,6 @@ const ContractorsScreen: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [showVerifiedOnly, setShowVerifiedOnly] = useState(false);
-  const [showSortModal, setShowSortModal] = useState(false);
-  const [sortBy, setSortBy] = useState<'rating' | 'distance' | 'recommendations'>('rating');
 
   const categories = ['All', 'Plumbing', 'Electrical', 'HVAC', 'Carpentry', 'Painting', 'Landscaping'];
 
@@ -44,7 +41,7 @@ const ContractorsScreen: React.FC = () => {
       isVerified: true,
       experience: 8,
       location: 'Downtown & Midtown',
-      recommendedBy: 3,
+      ratingCount: 3,
       available: true,
     },
     {
@@ -58,7 +55,7 @@ const ContractorsScreen: React.FC = () => {
       isVerified: true,
       experience: 6,
       location: 'North Side',
-      recommendedBy: 2,
+      ratingCount: 2,
       available: true,
     },
     {
@@ -72,7 +69,7 @@ const ContractorsScreen: React.FC = () => {
       isVerified: false,
       experience: 10,
       location: 'East District',
-      recommendedBy: 5,
+      ratingCount: 5,
       available: false,
     },
     {
@@ -86,7 +83,7 @@ const ContractorsScreen: React.FC = () => {
       isVerified: true,
       experience: 12,
       location: 'Central Area',
-      recommendedBy: 7,
+      ratingCount: 7,
       available: true,
     },
     {
@@ -100,48 +97,25 @@ const ContractorsScreen: React.FC = () => {
       isVerified: false,
       experience: 5,
       location: 'West End',
-      recommendedBy: 1,
+      ratingCount: 1,
       available: true,
     },
   ];
 
-  const getRecommendationText = (count: number) => {
-    return `Recommended by ${count} mutual friend${count !== 1 ? 's' : ''}`;
-  };
-
-  // Sort options
-  const sortOptions = [
-    { id: 'rating', label: 'Highest Rated', icon: 'star' },
-    { id: 'distance', label: 'Closest to Me', icon: 'location' },
-    { id: 'recommendations', label: 'Most Recommended', icon: 'people' },
-  ];
-
-  const handleSort = (option: 'rating' | 'distance' | 'recommendations') => {
-    setSortBy(option);
-    setShowSortModal(false);
+  const getRatingBadgeColor = (ratingCount: number) => {
+    if (ratingCount >= 5) return '#10B981'; // Green for 5+
+    if (ratingCount >= 3) return '#F59E0B'; // Orange for 3-4
+    return '#3B82F6'; // Blue for 1-2
   };
 
   // Filter contractors based on search, category, and verified status
-  const filteredAndSortedContractors = allContractors
-    .filter(contractor => {
-      const matchesSearch = contractor.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                            contractor.service.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesCategory = selectedCategory === 'All' || contractor.service === selectedCategory;
-      const matchesVerified = !showVerifiedOnly || contractor.isVerified;
-      return matchesSearch && matchesCategory && matchesVerified;
-    })
-    .sort((a, b) => {
-      if (sortBy === 'rating') {
-        return b.rating - a.rating;
-      } else if (sortBy === 'distance') {
-        const distanceA = parseFloat(a.distance);
-        const distanceB = parseFloat(b.distance);
-        return distanceA - distanceB;
-      } else if (sortBy === 'recommendations') {
-        return b.recommendedBy - a.recommendedBy;
-      }
-      return 0;
-    });
+  const filteredContractors = allContractors.filter(contractor => {
+    const matchesSearch = contractor.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          contractor.service.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = selectedCategory === 'All' || contractor.service === selectedCategory;
+    const matchesVerified = !showVerifiedOnly || contractor.isVerified;
+    return matchesSearch && matchesCategory && matchesVerified;
+  });
 
   const renderContractor = ({ item }: { item: typeof allContractors[0] }) => (
     <TouchableOpacity 
@@ -154,6 +128,16 @@ const ContractorsScreen: React.FC = () => {
             source={{ uri: item.image }} 
             style={styles.contractorImage}
           />
+          {item.ratingCount > 0 && (
+            <View 
+              style={[
+                styles.ratingBadge,
+                { backgroundColor: getRatingBadgeColor(item.ratingCount) }
+              ]}
+            >
+              <Text style={styles.ratingBadgeText}>{item.ratingCount}</Text>
+            </View>
+          )}
           {item.isVerified && (
             <View style={styles.verifiedIconBadge}>
               <Ionicons name="checkmark-circle" size={20} color="#3B82F6" />
@@ -190,13 +174,6 @@ const ContractorsScreen: React.FC = () => {
               {item.distance}
             </Text>
           </View>
-          
-          <View style={styles.recommendationBadge}>
-            <Ionicons name="people" size={14} color="#3B82F6" />
-            <Text style={[styles.recommendationText, { color: colors.secondaryText }]}>
-              {getRecommendationText(item.recommendedBy)}
-            </Text>
-          </View>
         </View>
       </View>
       
@@ -222,7 +199,7 @@ const ContractorsScreen: React.FC = () => {
       {/* Header */}
       <View style={[styles.header, { backgroundColor: colors.headerBackground, borderBottomColor: colors.border }]}>
         <Text style={[styles.headerTitle, { color: colors.primaryText }]}>Find Contractors</Text>
-        <TouchableOpacity onPress={() => setShowSortModal(true)}>
+        <TouchableOpacity>
           <Ionicons name="filter-outline" size={24} color={colors.primaryText} />
         </TouchableOpacity>
       </View>
@@ -261,7 +238,7 @@ const ContractorsScreen: React.FC = () => {
           </Text>
         </TouchableOpacity>
         <Text style={[styles.resultCount, { color: colors.secondaryText }]}>
-          {filteredAndSortedContractors.length} contractors found
+          {filteredContractors.length} contractors found
         </Text>
       </View>
 
@@ -277,10 +254,8 @@ const ContractorsScreen: React.FC = () => {
             key={category}
             style={[
               styles.categoryPill,
-              { 
-                backgroundColor: selectedCategory === category ? colors.primary : colors.surface,
-                borderColor: selectedCategory === category ? colors.primary : 'transparent'
-              }
+              { backgroundColor: colors.surface, borderColor: colors.border },
+              selectedCategory === category && [styles.categoryPillActive, { backgroundColor: colors.primary }]
             ]}
             onPress={() => setSelectedCategory(category)}
           >
@@ -298,17 +273,18 @@ const ContractorsScreen: React.FC = () => {
       {/* Results Count */}
       <View style={styles.resultsContainer}>
         <Text style={[styles.resultsText, { color: colors.secondaryText }]}>
-          {filteredAndSortedContractors.length} contractors found
+          {filteredContractors.length} contractors found
         </Text>
       </View>
 
       {/* Contractors List */}
       <FlatList
-        data={filteredAndSortedContractors}
+        data={filteredContractors}
         renderItem={renderContractor}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
+        ItemSeparatorComponent={() => <View style={styles.listSeparator} />}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Ionicons name="search-outline" size={48} color={colors.secondaryText} />
@@ -317,58 +293,6 @@ const ContractorsScreen: React.FC = () => {
           </View>
         }
       />
-
-      {/* Sort Modal */}
-      <Modal
-        visible={showSortModal}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setShowSortModal(false)}
-      >
-        <TouchableOpacity 
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setShowSortModal(false)}
-        >
-          <View style={[styles.sortModal, { backgroundColor: colors.cardBackground }]}>
-            <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: colors.primaryText }]}>Sort By</Text>
-              <TouchableOpacity onPress={() => setShowSortModal(false)}>
-                <Ionicons name="close" size={24} color={colors.secondaryText} />
-              </TouchableOpacity>
-            </View>
-            
-            {sortOptions.map((option) => (
-              <TouchableOpacity
-                key={option.id}
-                style={[
-                  styles.sortOption,
-                  { borderBottomColor: colors.border },
-                  sortBy === option.id && { backgroundColor: colors.surface }
-                ]}
-                onPress={() => handleSort(option.id as 'rating' | 'distance' | 'recommendations')}
-              >
-                <View style={styles.sortOptionLeft}>
-                  <Ionicons 
-                    name={option.icon as any} 
-                    size={22} 
-                    color={sortBy === option.id ? colors.primary : colors.secondaryText} 
-                  />
-                  <Text style={[
-                    styles.sortOptionText,
-                    { color: sortBy === option.id ? colors.primary : colors.primaryText }
-                  ]}>
-                    {option.label}
-                  </Text>
-                </View>
-                {sortBy === option.id && (
-                  <Ionicons name="checkmark" size={24} color={colors.primary} />
-                )}
-              </TouchableOpacity>
-            ))}
-          </View>
-        </TouchableOpacity>
-      </Modal>
     </SafeAreaView>
   );
 };
@@ -422,19 +346,17 @@ const styles = StyleSheet.create({
   },
   categoryPill: {
     paddingHorizontal: 20,
-    paddingVertical: 8,
+    paddingVertical: 10,
     backgroundColor: '#F3F4F6',
-    borderRadius: 20,
+    borderRadius: 24,
     marginRight: 10,
-    borderWidth: 1,
-    borderColor: 'transparent',
-    minHeight: 36,
-    justifyContent: 'center',
-    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#E5E7EB',
   },
   categoryPillActive: {
     backgroundColor: '#3B82F6',
-    borderColor: '#3B82F6',
+    borderColor: '#2563EB',
+    borderWidth: 2,
   },
   categoryText: {
     fontSize: 14,
@@ -461,10 +383,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: 16,
-    paddingHorizontal: 16,
-    marginBottom: 12,
-    borderRadius: 12,
-    borderWidth: 1,
   },
   contractorLeft: {
     flexDirection: 'row',
@@ -569,16 +487,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#6B7280',
   },
-  recommendationBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 6,
-    gap: 6,
-  },
-  recommendationText: {
-    fontSize: 12,
-    color: '#6B7280',
-  },
   contractorRight: {
     flexDirection: 'column',
     alignItems: 'flex-end',
@@ -650,53 +558,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#6B7280',
     marginTop: 4,
-  },
-  // Sort Modal Styles
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  sortModal: {
-    width: '100%',
-    maxWidth: 400,
-    borderRadius: 16,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-  },
-  sortOption: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 12,
-    borderBottomWidth: 1,
-    borderRadius: 8,
-  },
-  sortOptionLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  sortOptionText: {
-    fontSize: 16,
-    fontWeight: '500',
   },
 });
 
